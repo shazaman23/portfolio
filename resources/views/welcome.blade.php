@@ -18,7 +18,7 @@
 
 <div class="content container-fluid">
 
-  <div class="row">
+  <div class="row" style="height: 500px;">
 
     <div class="col-11 offset-1
                 col-md-3 offset-md-1
@@ -27,12 +27,6 @@
       <div class="">
         <h1 class="display-3 text-left"><strong>Jake <br>Killpack</strong></h1>
         <h5 class="text-muted text-left">Web Developer</h5>
-      </div>
-    </div>
-
-    <div class="col-12 col-md-8 align-self-center">
-      <div class="">
-        <img id="main-profile" class="img-fluid" src="{{ URL::asset('/img/profile-pic-wedding-CC.jpg') }}" alt="profile picture">
       </div>
     </div>
 
