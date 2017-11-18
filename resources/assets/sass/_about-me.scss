@@ -1,5 +1,13 @@
 .about-me {
   min-height: 700px;
-  background: $brand-main-cool; 
+  background: $brand-main-cool;
   color: $brand-main-flat;
+
+  hr {
+    width: 50%;
+  }
+
+  .strip {
+    margin: 1em 0;
+  }
 }
