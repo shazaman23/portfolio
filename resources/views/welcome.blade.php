@@ -18,13 +18,13 @@
 
 <div class="content container-fluid">
 
-  <div class="row" style="height: 500px;">
+  <div class="row home">
 
     <div class="col-11 offset-1
                 col-md-3 offset-md-1
                 col-lg-2 offset-lg-2
                 align-self-center">
-      <div class="">
+      <div class="title">
         <h1 class="display-3 text-left"><strong>Jake <br>Killpack</strong></h1>
         <h5 class="text-muted text-left">Web Developer</h5>
       </div>
@@ -32,7 +32,17 @@
 
   </div>
 
-  <div class="row">
+  <div class="row about-me">
+    <div class="">
+
+    </div>
+  </div>
+
+  <div class="row my-work">
+
+  </div>
+
+  <div class="row contact-me">
 
   </div>
 </div>
