@@ -1,4 +1,21 @@
 .footer {
-  margin: 1em 2em;
-  font-size: .7em;
+
+  .contact-info {
+    padding: 1em 0;
+    font-size: .8em;
+    background: $brand-main-flat;
+    color: $brand-main-cool;
+    a {
+      color: $brand-main-cool;
+
+      &:hover {
+        color: $brand-main-warm;
+      }
+    }
+  }
+
+  .icon-bib {
+    font-size: .7em;
+    margin: 1em 2em;
+  }
 }

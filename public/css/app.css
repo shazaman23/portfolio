@@ -8410,12 +8410,49 @@ Creation date: 19/11/2017 09:25
   font-smoothing: antialiased;
 }
 
-.flaticon-envelope:before {
+.flaticon-linkedin:before {
   content: "\F100";
 }
 
-.flaticon-email-filled-closed-envelope:before {
+.flaticon-github-logo:before {
   content: "\F101";
+}
+
+.flaticon-github:before {
+  content: "\F102";
+}
+
+.flaticon-phone-symbol-of-an-auricular-inside-a-circle:before {
+  content: "\F103";
+}
+
+.flaticon-auricular-phone-symbol-in-a-circle:before {
+  content: "\F104";
+}
+
+.flaticon-phone-receiver:before {
+  content: "\F105";
+}
+
+.flaticon-envelope:before {
+  content: "\F106";
+}
+
+.flaticon-email-filled-closed-envelope:before {
+  content: "\F107";
+}
+
+a {
+  color: #61cdf5;
+}
+
+a:hover {
+  color: #61cdf5;
+}
+
+a:visited {
+  color: #61cdf5;
+  text-decoration: none;
 }
 
 h2 {
@@ -8510,6 +8547,7 @@ hr {
 .contact-me {
   background: #555555;
   color: #ffffff;
+  padding-bottom: 3em;
 }
 
 .contact-me .main-title {
@@ -8519,19 +8557,6 @@ hr {
 .contact-me .main-email {
   color: #61cdf5;
   margin-bottom: 1em;
-}
-
-.contact-me .main-email a {
-  color: #61cdf5;
-}
-
-.contact-me .main-email a:hover {
-  color: #61cdf5;
-}
-
-.contact-me .main-email a:visited {
-  color: #61cdf5;
-  text-decoration: none;
 }
 
 .contact-me .main-email i {
@@ -8551,8 +8576,23 @@ hr {
   padding-left: 1em;
 }
 
-.footer {
-  margin: 1em 2em;
+.footer .contact-info {
+  padding: 1em 0;
+  font-size: .8em;
+  background: #ffffff;
+  color: #555555;
+}
+
+.footer .contact-info a {
+  color: #555555;
+}
+
+.footer .contact-info a:hover {
+  color: #61cdf5;
+}
+
+.footer .icon-bib {
   font-size: .7em;
+  margin: 1em 2em;
 }
 

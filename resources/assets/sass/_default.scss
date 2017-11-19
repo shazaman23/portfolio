@@ -1,3 +1,16 @@
+a {
+  color: $brand-main-warm;
+
+  &:hover {
+    color: $brand-main-warm;
+  }
+
+  &:visited {
+    color: $brand-main-warm;
+    text-decoration: none;
+  }
+}
+
 h2 {
   font-size: 52px;
 }
