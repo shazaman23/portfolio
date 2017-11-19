@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>Laravel</title>
+        <title>{{ env('APP_NAME') }}</title>
 
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css?family=Raleway:100,600" rel="stylesheet" type="text/css">
@@ -35,10 +35,8 @@
 
         </div>
 
-        @yield('footer')
-
         <!-- Scripts -->
-        <!-- <script src="https://unpkg.com/vue"></script> -->
         <script type="text/javascript" src="/js/app.js"></script>
+
     </body>
 </html>
