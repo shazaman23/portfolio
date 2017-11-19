@@ -107,32 +107,37 @@
   <div class="row my-work">
     <div class="w-100 d-flex flex-column">
 
+      <!-- MAIN TITLE -->
+      <h2 class="main-title text-center font-weight-bold">My Work</h2>
+
       <div class="computer-demo">
-        <div class="screen-demo"></div>
+        <div class="screen-demo"
+             v-bind:style="[{ background: 'url(' + screenPath + ')' }, { backgroundSize: 'contain' }, { backgroundRepeat: 'no-repeat'}]">
+        </div>
       </div>
 
       <div class="menu d-flex flex-row flex-wrap text-center">
-        <div id="uk2-dropdown" class="menu-option flex-1 text-center">
+        <div id="uk2-dropdown" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-dropdown')">
           UK2 - Dropdown Cart
           <br>
           <small class="text-uppercase">Developed</small>
         </div>
-        <div id="uk2-dont-forget" class="menu-option flex-1 text-center">
+        <div id="uk2-dont-forget" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-dont-forget')">
           UK2 - Don't Forget Overlay
           <br>
           <small class="text-uppercase">Developed</small>
         </div>
-        <div id="uk2-bulk-search" class="menu-option flex-1 text-center">
+        <div id="uk2-bulk-search" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-bulk-search')">
           UK2 - Bulk Domain Search
           <br>
           <small class="text-uppercase">Developed</small>
         </div>
-        <div id="uk2-disclaimers" class="menu-option flex-1 text-center">
+        <div id="uk2-disclaimers" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-disclaimers')">
           UK2 - Dynamic Disclaimers
           <br>
           <small class="text-uppercase">Designed & Developed</small>
         </div>
-        <div id="benegov-site" class="menu-option flex-1 text-center">
+        <div id="benegov-site" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('benegov-site')">
           Benegov Website
           <br>
           <small class="text-uppercase">Designed & Developed</small>

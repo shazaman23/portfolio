@@ -3,6 +3,10 @@
   background: $brand-main-warm;
   color: $brand-main-flat;
 
+  .main-title {
+    margin-bottom: 0;
+  }
+
   .computer-demo {
     min-height: 690px;
   }

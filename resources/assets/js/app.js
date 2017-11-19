@@ -18,5 +18,13 @@ window.Vue = require('vue');
 Vue.component('example-component', require('./components/ExampleComponent.vue'));
 
 const app = new Vue({
-    el: '#app'
+    el: '#app',
+    data: {
+      screenPath: '/img/screenshots/benegov-site.png'
+    },
+    methods: {
+      setScreenBg: function(element) {
+        this.screenPath = '/img/screenshots/' + element + '.png';
+      }
+    }
 });

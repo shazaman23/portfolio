@@ -8367,6 +8367,14 @@ button.close {
   background-position-x: center;
 }
 
+.screen-demo {
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position-x: center !important;
+  -webkit-transition: background, .5s;
+  transition: background, .5s;
+}
+
 h2 {
   font-size: 52px;
 }
@@ -8418,6 +8426,10 @@ hr {
   min-height: 700px;
   background: #61cdf5;
   color: #ffffff;
+}
+
+.my-work .main-title {
+  margin-bottom: 0;
 }
 
 .my-work .computer-demo {

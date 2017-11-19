@@ -990,7 +990,15 @@ window.Vue = __webpack_require__(35);
 Vue.component('example-component', __webpack_require__(38));
 
 var app = new Vue({
-  el: '#app'
+  el: '#app',
+  data: {
+    screenPath: '/img/screenshots/benegov-site.png'
+  },
+  methods: {
+    setScreenBg: function setScreenBg(element) {
+      this.screenPath = '/img/screenshots/' + element + '.png';
+    }
+  }
 });
 
 /***/ }),

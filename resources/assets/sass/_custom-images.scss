@@ -16,3 +16,10 @@
     background-position-x: center;
   }
 }
+
+.screen-demo {
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position-x: center !important;
+  transition: background, .5s;
+}
