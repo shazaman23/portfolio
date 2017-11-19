@@ -2,4 +2,30 @@
   min-height: 700px;
   background: $brand-main-warm;
   color: $brand-main-flat;
+
+  .computer-demo {
+    min-height: 690px;
+  }
+
+  .screen-demo {
+    background: #fff;
+    width: 632px;
+    height: 422px;
+    margin: 4.5em auto;
+  }
+
+  .menu {
+    background: $brand-main-flat;
+    .menu-option {
+      color: $brand-main-cool;
+      min-width: 33.33333%;
+      padding: .5em 0;
+
+      &:hover {
+        transition: background, .5s;
+        background: $brand-main-cool;
+        color: $brand-main-flat;
+      }
+    }
+  }
 }

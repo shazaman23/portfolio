@@ -8360,6 +8360,13 @@ button.close {
   background-repeat: no-repeat;
 }
 
+.my-work .computer-demo {
+  background: url("/img/computer-screen.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position-x: center;
+}
+
 h2 {
   font-size: 52px;
 }
@@ -8395,7 +8402,6 @@ hr {
 }
 
 .about-me {
-  min-height: 700px;
   background: #555555;
   color: #ffffff;
 }
@@ -8411,6 +8417,34 @@ hr {
 .my-work {
   min-height: 700px;
   background: #61cdf5;
+  color: #ffffff;
+}
+
+.my-work .computer-demo {
+  min-height: 690px;
+}
+
+.my-work .screen-demo {
+  background: #fff;
+  width: 632px;
+  height: 422px;
+  margin: 4.5em auto;
+}
+
+.my-work .menu {
+  background: #ffffff;
+}
+
+.my-work .menu .menu-option {
+  color: #555555;
+  min-width: 33.33333%;
+  padding: .5em 0;
+}
+
+.my-work .menu .menu-option:hover {
+  -webkit-transition: background, .5s;
+  transition: background, .5s;
+  background: #555555;
   color: #ffffff;
 }
 

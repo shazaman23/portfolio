@@ -7,3 +7,12 @@
   background-size: cover;
   background-repeat: no-repeat;
 }
+
+.my-work {
+  .computer-demo {
+    background: url("/img/computer-screen.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position-x: center;
+  }
+}
