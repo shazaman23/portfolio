@@ -33,7 +33,8 @@ class ViewerContact extends Mailable
      */
     public function build()
     {
-        return $this->from($this->request->email)
+        return $this->from($this->request->email, $this->request->name)
+                    ->subject("Viewer Contact - " . $this->request->name)
                     ->markdown('emails.viewerContact')
                     ->with([
                         'name' => $this->request->name,
