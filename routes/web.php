@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ViewerContact;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -12,5 +16,10 @@
 */
 
 Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::post('/send', function(Request $request) {
+    Mail::to("intechninja@gmail.com")->send(new ViewerContact($request));
     return view('welcome');
 });

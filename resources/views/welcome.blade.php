@@ -162,7 +162,7 @@
       <p>I'll get back to you in a flash!</p>
 
       <!-- EMAIL FORM -->
-      <form class="email-form text-left" action="index.php" method="post">
+      <form class="email-form text-left" action="/send" method="post">
 
         <div class="form-row">
 
@@ -182,6 +182,10 @@
           <label for="inputBody">How can I help?</label>
           <textarea id="inputBody" class="form-control" name="body" rows="10" cols="40" placeholder="John Doe's story..."></textarea>
         </div>
+
+        {{ csrf_field() }}
+
+        <button type="submit" class="btn btn-default">Send Message</button>
 
       </form>
       <!-- END EMAIL FORM -->

@@ -8604,6 +8604,10 @@ hr {
   margin: 1em auto;
 }
 
+.contact-me .email-form button {
+  color: black;
+}
+
 .contact-me .email-form .simple-set:nth-of-type(1) {
   padding-right: 1em;
 }
