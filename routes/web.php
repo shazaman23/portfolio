@@ -21,5 +21,6 @@ Route::get('/', function () {
 
 Route::post('/send', function(Request $request) {
     Mail::to("intechninja@gmail.com")->send(new ViewerContact($request));
-    return view('welcome');
+    // return redirect('/')->with('status', 'Message Sent!');
+    return redirect('/');
 });

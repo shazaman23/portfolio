@@ -34,6 +34,16 @@
                 </div>
             @endif
 
+            @if (Session::has('status'))
+              <div class='alert alert-info'>
+                  <p>{{ Session::get('status') }}</p>
+              </div>
+            @elseif (Session::has('emailError'))
+              <div class="alert alert-danger">
+                <p>There was an error sending the email. Please try again later.</p>
+              </div>
+            @endif
+
             @yield('content')
 
         </div>

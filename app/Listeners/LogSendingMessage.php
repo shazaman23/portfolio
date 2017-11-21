@@ -28,5 +28,6 @@ class LogSendingMessage
     public function handle(MessageSending $event)
     {
         Log::info('Message is sending...');
+        app('request')->session()->flash('emailError', 'Failed to send');
     }
 }
