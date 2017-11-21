@@ -20,11 +20,31 @@ Vue.component('example-component', require('./components/ExampleComponent.vue'))
 const app = new Vue({
     el: '#app',
     data: {
-      screenPath: '/img/screenshots/benegov-site.png'
+      screenPath: '/img/screenshots/benegov-site.png',
+      bgCount: 5,
+      currentBg: 0,
+      allBgs: ['benegov-site.png', 'uk2-bulk-search.png', 'uk2-disclaimers.png', 'uk2-dont-forget.png', 'uk2-dropdown.png'],
+      timer: ''
+    },
+    created: function() {
+      this.timer = setInterval(this.updateScreenBg, 5000);
     },
     methods: {
       setScreenBg: function(element) {
         this.screenPath = '/img/screenshots/' + element + '.png';
+        clearInterval(this.timer);
+        this.timer = setInterval(this.restartScreenUpdate, 10000);
+      },
+      updateScreenBg: function() {
+        this.screenPath = '/img/screenshots/' + this.allBgs[this.currentBg];
+        this.currentBg++;
+        if (this.currentBg >= this.bgCount) {
+          this.currentBg = 0;
+        }
+      },
+      restartScreenUpdate: function() {
+        clearInterval(this.timer);
+        this.timer = setInterval(this.updateScreenBg, 5000);
       }
     }
 });
