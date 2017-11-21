@@ -13,5 +13,24 @@
 
   .strip {
     margin: 1em 0;
+
+    i {
+      &.large {
+        font-size: 105px;
+      }
+    }
+
+    &:hover {
+      color: $brand-main-warm;
+      animation-name: strip-anim;
+      animation-duration: .4s;
+    }
+
   }
+}
+
+// ANIMATIONS
+@keyframes strip-anim {
+  from { color: $brand-main-flat; }
+  to { color: $brand-main-warm; }
 }

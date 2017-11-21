@@ -36,20 +36,22 @@ Creation date: 19/11/2017 09:25
   font-smoothing: antialiased;
 }
 
-.flaticon-linkedin:before { content: "\f100"; }
-.flaticon-github-logo:before { content: "\f101"; }
+.flaticon-phone:before { content: "\f100"; }
+.flaticon-email:before { content: "\f101"; }
 .flaticon-github:before { content: "\f102"; }
-.flaticon-phone-symbol-of-an-auricular-inside-a-circle:before { content: "\f103"; }
-.flaticon-auricular-phone-symbol-in-a-circle:before { content: "\f104"; }
-.flaticon-phone-receiver:before { content: "\f105"; }
-.flaticon-envelope:before { content: "\f106"; }
-.flaticon-email-filled-closed-envelope:before { content: "\f107"; }
+.flaticon-linkedin:before { content: "\f103"; }
+.flaticon-home:before { content: "\f104"; }
+.flaticon-tv:before { content: "\f105"; }
+.flaticon-books:before { content: "\f106"; }
+.flaticon-gamepad:before { content: "\f107"; }
+.flaticon-hiker:before { content: "\f108"; }
 
-$font-Flaticon-linkedin: "\f100";
-$font-Flaticon-github-logo: "\f101";
-$font-Flaticon-github: "\f102";
-$font-Flaticon-phone-symbol-of-an-auricular-inside-a-circle: "\f103";
-$font-Flaticon-auricular-phone-symbol-in-a-circle: "\f104";
-$font-Flaticon-phone-receiver: "\f105";
-$font-Flaticon-envelope: "\f106";
-$font-Flaticon-email-filled-closed-envelope: "\f107";
+$font-Flaticon-technology-1: "\f100";
+$font-Flaticon-note: "\f101";
+$font-Flaticon-circle: "\f102";
+$font-Flaticon-social-media: "\f103";
+$font-Flaticon-home: "\f104";
+$font-Flaticon-technology: "\f105";
+$font-Flaticon-books: "\f106";
+$font-Flaticon-gamepad: "\f107";
+$font-Flaticon-hiker: "\f108";

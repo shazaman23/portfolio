@@ -8410,11 +8410,11 @@ Creation date: 19/11/2017 09:25
   font-smoothing: antialiased;
 }
 
-.flaticon-linkedin:before {
+.flaticon-phone:before {
   content: "\F100";
 }
 
-.flaticon-github-logo:before {
+.flaticon-email:before {
   content: "\F101";
 }
 
@@ -8422,24 +8422,28 @@ Creation date: 19/11/2017 09:25
   content: "\F102";
 }
 
-.flaticon-phone-symbol-of-an-auricular-inside-a-circle:before {
+.flaticon-linkedin:before {
   content: "\F103";
 }
 
-.flaticon-auricular-phone-symbol-in-a-circle:before {
+.flaticon-home:before {
   content: "\F104";
 }
 
-.flaticon-phone-receiver:before {
+.flaticon-tv:before {
   content: "\F105";
 }
 
-.flaticon-envelope:before {
+.flaticon-books:before {
   content: "\F106";
 }
 
-.flaticon-email-filled-closed-envelope:before {
+.flaticon-gamepad:before {
   content: "\F107";
+}
+
+.flaticon-hiker:before {
+  content: "\F108";
 }
 
 a {
@@ -8505,6 +8509,38 @@ hr {
 
 .about-me .strip {
   margin: 1em 0;
+}
+
+.about-me .strip i.large {
+  font-size: 105px;
+}
+
+.about-me .strip:hover {
+  color: #61cdf5;
+  -webkit-animation-name: strip-anim;
+          animation-name: strip-anim;
+  -webkit-animation-duration: .4s;
+          animation-duration: .4s;
+}
+
+@-webkit-keyframes strip-anim {
+  from {
+    color: #ffffff;
+  }
+
+  to {
+    color: #61cdf5;
+  }
+}
+
+@keyframes strip-anim {
+  from {
+    color: #ffffff;
+  }
+
+  to {
+    color: #61cdf5;
+  }
 }
 
 .my-work {

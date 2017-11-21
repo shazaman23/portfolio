@@ -31,7 +31,8 @@
         <h4 class="flex-1 text-center">Family</h4>
 
         <div class="flex-1 text-center">
-          <img src="{{ URL::asset('/img/icons/home.png') }}" alt="family icon">
+          <!-- <img src="{{ URL::asset('/img/icons/home.png') }}" alt="family icon"> -->
+          <i class="fi flaticon-home large"></i>
         </div>
 
       </div>
@@ -44,7 +45,8 @@
         <h4 class="flex-1 text-center">Gaming</h4>
 
         <div class="flex-1 text-center">
-          <img src="{{ URL::asset('/img/icons/gamepad.png') }}" alt="gaming icon">
+          <!-- <img src="{{ URL::asset('/img/icons/gamepad.png') }}" alt="gaming icon"> -->
+          <i class="fi flaticon-gamepad large"></i>
         </div>
 
       </div>
@@ -57,7 +59,8 @@
         <h4 class="flex-1 text-center">Learning</h4>
 
         <div class="flex-1 text-center">
-          <img src="{{ URL::asset('/img/icons/books.png') }}" alt="study icon">
+          <!-- <img src="{{ URL::asset('/img/icons/books.png') }}" alt="study icon"> -->
+          <i class="fi flaticon-books large"></i>
         </div>
 
       </div>
@@ -70,7 +73,8 @@
         <h4 class="flex-1 text-center">Movies</h4>
 
         <div class="flex-1 text-center">
-          <img src="{{ URL::asset('/img/icons/tv.png') }}" alt="tv icon">
+          <!-- <img src="{{ URL::asset('/img/icons/tv.png') }}" alt="tv icon"> -->
+          <i class="fi flaticon-tv large"></i>
         </div>
 
       </div>
@@ -83,7 +87,8 @@
         <h4 class="flex-1 text-center">Adventure</h4>
 
         <div class="flex-1 text-center">
-          <img src="{{ URL::asset('/img/icons/hiker.png') }}" alt="adventure icon">
+          <!-- <img src="{{ URL::asset('/img/icons/hiker.png') }}" alt="adventure icon"> -->
+          <i class="fi flaticon-hiker large"></i>
         </div>
 
       </div>
@@ -150,7 +155,7 @@
       <h2 class="main-title font-weight-bold">Contact Me</h2>
 
       <!-- DESCRIPTION TEXT -->
-      <span class="main-email"><i class="fi flaticon-envelope"></i><a href="mailto:contact@jakekillpack.com">contact@jakekillpack.com</a></span>
+      <span class="main-email"><i class="fi flaticon-email"></i><a href="mailto:contact@jakekillpack.com">contact@jakekillpack.com</a></span>
 
       <p>Need help with a project? Looking to hire? Fill in the form or use the link above to send me a message.</p>
 
@@ -213,7 +218,7 @@
 
         <!-- GITHUB -->
         <div class="flex-1">
-          <a href="https://github.com/shazaman23"><i class="fi flaticon-github-logo"></i> GitHub</a>
+          <a href="https://github.com/shazaman23"><i class="fi flaticon-github"></i> GitHub</a>
         </div>
 
         <!-- LINKEDIN -->
@@ -223,12 +228,12 @@
 
         <!-- PHONE -->
         <!-- <div class="flex-1">
-          <i class="fi flaticon-phone-receiver"></i> (435) 757-7375
+          <i class="fi flaticon-phone"></i> (435) 757-7375
         </div> -->
 
         <!-- EMAIL -->
         <div class="flex-1">
-          <a href="mailto:contact@jakekillpack.com"><i class="fi flaticon-envelope"></i> contact@jakekillpack.com</a>
+          <a href="mailto:contact@jakekillpack.com"><i class="fi flaticon-email"></i> contact@jakekillpack.com</a>
         </div>
 
       </div>
