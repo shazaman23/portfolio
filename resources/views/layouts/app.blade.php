@@ -35,11 +35,11 @@
             @endif
 
             @if (Session::has('status'))
-              <div class='alert alert-info'>
+              <div class="alert alert-success flash-alert" v-bind:class="{ 'hide-alert': timeout }">
                   <p>{{ Session::get('status') }}</p>
               </div>
             @elseif (Session::has('emailError'))
-              <div class="alert alert-danger">
+              <div class="alert alert-danger flash-alert" v-bind:class="{ 'hide-alert': timeout }">
                 <p>There was an error sending the email. Please try again later.</p>
               </div>
             @endif

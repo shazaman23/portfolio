@@ -8472,6 +8472,20 @@ hr {
   margin: 1.5em;
 }
 
+.flash-alert {
+  position: fixed;
+  top: 3%;
+  left: 3%;
+  padding: 15px 50px;
+  z-index: 1;
+}
+
+.flash-alert.hide-alert {
+  opacity: 0;
+  -webkit-transition: opacity, 1s;
+  transition: opacity, 1s;
+}
+
 .flex-1 {
   -webkit-box-flex: 1;
       -ms-flex: 1 1 auto;
@@ -8606,6 +8620,12 @@ hr {
 
 .contact-me .email-form button {
   color: black;
+}
+
+.contact-me .email-form .alert {
+  font-size: 15px;
+  padding: 0;
+  margin-bottom: 10px;
 }
 
 .contact-me .email-form .simple-set:nth-of-type(1) {

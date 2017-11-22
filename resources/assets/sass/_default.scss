@@ -23,3 +23,16 @@ hr {
 .main-title {
   margin: 1.5em;
 }
+
+.flash-alert {
+  position: fixed;
+  top: 3%;
+  left: 3%;
+  padding: 15px 50px;
+  z-index: 1;
+
+  &.hide-alert {
+    opacity: 0;
+    transition: opacity, 1s;
+  }
+}

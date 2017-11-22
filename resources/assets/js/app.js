@@ -24,10 +24,12 @@ const app = new Vue({
       bgCount: 5,
       currentBg: 0,
       allBgs: ['benegov-site.png', 'uk2-bulk-search.png', 'uk2-disclaimers.png', 'uk2-dont-forget.png', 'uk2-dropdown.png'],
-      timer: ''
+      timer: '',
+      timeout: false
     },
     created: function() {
       this.timer = setInterval(this.updateScreenBg, 5000);
+      setTimeout(this.triggerTimeout, 5000);
     },
     methods: {
       setScreenBg: function(element) {
@@ -45,6 +47,9 @@ const app = new Vue({
       restartScreenUpdate: function() {
         clearInterval(this.timer);
         this.timer = setInterval(this.updateScreenBg, 5000);
+      },
+      triggerTimeout: function() {
+        this.timeout = true;
       }
     }
 });

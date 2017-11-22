@@ -148,7 +148,7 @@
     </div>
   </div>
 
-  <div class="row contact-me">
+  <div id="contact-me" class="row contact-me">
     <div class="w-100 d-flex flex-column text-center">
 
       <!-- MAIN TITLE -->
@@ -166,21 +166,63 @@
 
         <div class="form-row">
 
+          <!-- NAME -->
           <div class="form-group col simple-set">
+
             <label for="inputName">Name: </label>
-            <input id="inputName" class="form-control" type="text" name="name" placeholder="John Doe">
+
+            @if ($errors->has('name'))
+              <div class="alert alert-danger">
+                <ul>
+                  @foreach($errors->get('name') as $error)
+                    <li>{{ $error }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
+            <input id="inputName" class="form-control" type="text" name="name" placeholder="John Doe" value="{{ old('name') }}" required>
+
           </div>
 
+          <!-- EMAIL -->
           <div class="form-group col simple-set">
+
             <label for="inputEmail">Return Email: </label>
-            <input id="inputEmail" class="form-control" type="email" name="email" placeholder="johndoe@example.com">
+
+            @if ($errors->has('email'))
+              <div class="alert alert-danger">
+                <ul>
+                  @foreach($errors->get('email') as $error)
+                    <li>{{ $error }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
+            <input id="inputEmail" class="form-control" type="email" name="email" placeholder="johndoe@example.com" value="{{ old('email') }}" required>
+
           </div>
 
         </div>
 
+        <!-- BODY -->
         <div class="form-group">
+
           <label for="inputBody">How can I help?</label>
-          <textarea id="inputBody" class="form-control" name="body" rows="10" cols="40" placeholder="John Doe's story..."></textarea>
+
+          @if ($errors->has('body'))
+            <div class="alert alert-danger">
+              <ul>
+                @foreach($errors->get('body') as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          <textarea id="inputBody" class="form-control" name="body" rows="10" cols="40" placeholder="John Doe's story..." required>{{ old('body') }}</textarea>
+
         </div>
 
         {{ csrf_field() }}
