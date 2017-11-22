@@ -15,6 +15,7 @@ class CreateWorkExperiencesTable extends Migration
     {
         Schema::create('work_experiences', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('brand');
             $table->string('title');
             $table->text('problem');
             $table->text('description');
