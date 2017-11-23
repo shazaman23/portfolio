@@ -112,6 +112,12 @@
       <!-- MENU -->
       <div class="menu d-flex flex-row flex-wrap text-center">
 
+        @foreach ($experiences as $experience)
+          <span style="color: black">
+            {{ $experience->title }}
+          </span>
+        @endforeach
+
         <div id="uk2-dropdown" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-dropdown')">
           UK2 - Dropdown Cart
           <br>

@@ -11,7 +11,8 @@ use App\WorkExperience;
 class SiteController extends Controller
 {
     public function home() {
-      return view('welcome');
+      $workExperiences = WorkExperience::all();
+      return view('welcome')->with('experiences', $workExperiences);
     }
 
     public function sendMail(Request $request) {
@@ -31,6 +32,7 @@ class SiteController extends Controller
     }
 
     public function experienceIndex(WorkExperience $id) {
-      return view('welcome');
+      $workExperience = WorkExperience::where('id', $id)->firstOrFail();
+      return view('showcase.index')->with('experience', $workExperience);
     }
 }
