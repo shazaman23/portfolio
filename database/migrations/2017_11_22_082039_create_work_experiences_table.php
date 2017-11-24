@@ -20,6 +20,7 @@ class CreateWorkExperiencesTable extends Migration
             $table->text('problem');
             $table->text('description');
             $table->string('url');
+            $table->string('myPart');
             $table->string('backgroundImage');
             $table->timestamps();
         });

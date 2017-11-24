@@ -113,40 +113,56 @@
       <div class="menu d-flex flex-row flex-wrap text-center">
 
         @foreach ($experiences as $experience)
-          <span style="color: black">
-            {{ $experience->title }}
-          </span>
+          <div class="flex-1 text-center menu-slot">
+            <a href="/experience/{{ $experience->id }}">
+              <div class="menu-option mx-auto" v-on:mouseOver="setScreenBg('{{ $experience->backgroundImage }}')">
+                {{ $experience->brand }} - {{ $experience->title }}
+                <br>
+                <small class="text-uppercase">{{ $experience->myPart }}</small>
+              </div>
+            </a>
+          </div>
         @endforeach
 
-        <div id="uk2-dropdown" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-dropdown')">
-          UK2 - Dropdown Cart
-          <br>
-          <small class="text-uppercase">Developed</small>
+        <!-- <div class="flex-1 text-center menu-slot">
+          <div id="uk2-dropdown" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-dropdown.png')">
+            UK2 - Dropdown Cart
+            <br>
+            <small class="text-uppercase">Developed</small>
+          </div>
         </div>
 
-        <div id="uk2-dont-forget" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-dont-forget')">
-          UK2 - Don't Forget Overlay
-          <br>
-          <small class="text-uppercase">Developed</small>
+        <div class="flex-1 text-center menu-slot">
+          <div id="uk2-dont-forget" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-dont-forget.png')">
+            UK2 - Don't Forget Overlay
+            <br>
+            <small class="text-uppercase">Developed</small>
+          </div>
         </div>
 
-        <div id="uk2-bulk-search" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-bulk-search')">
-          UK2 - Bulk Domain Search
-          <br>
-          <small class="text-uppercase">Developed</small>
+        <div class="flex-1 text-center menu-slot">
+          <div id="uk2-bulk-search" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-bulk-search.png')">
+            UK2 - Bulk Domain Search
+            <br>
+            <small class="text-uppercase">Developed</small>
+          </div>
         </div>
 
-        <div id="uk2-disclaimers" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('uk2-disclaimers')">
-          UK2 - Dynamic Disclaimers
-          <br>
-          <small class="text-uppercase">Designed & Developed</small>
+        <div class="flex-1 text-center menu-slot">
+          <div id="uk2-disclaimers" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-disclaimers.png')">
+            UK2 - Dynamic Disclaimers
+            <br>
+            <small class="text-uppercase">Designed & Developed</small>
+          </div>
         </div>
 
-        <div id="benegov-site" class="menu-option flex-1 text-center" v-on:mouseOver="setScreenBg('benegov-site')">
-          Benegov Website
-          <br>
-          <small class="text-uppercase">Designed & Developed</small>
-        </div>
+        <div class="flex-1 text-center menu-slot">
+          <div id="benegov-site" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('benegov-site.png')">
+            Benegov Website
+            <br>
+            <small class="text-uppercase">Designed & Developed</small>
+          </div>
+        </div> -->
 
       </div>
       <!-- END MENU -->

@@ -33,7 +33,7 @@ const app = new Vue({
     },
     methods: {
       setScreenBg: function(element) {
-        this.screenPath = '/img/screenshots/' + element + '.png';
+        this.screenPath = '/img/screenshots/' + element;
         clearInterval(this.timer);
         this.timer = setInterval(this.restartScreenUpdate, 10000);
       },

@@ -1,0 +1,10 @@
+.showcase {
+  background: $brand-main-warm;
+  color: $brand-main-flat;
+  min-height: 690px;
+  padding-bottom: 3em;
+
+  .features {
+    background: $brand-main-cool;
+  }
+}

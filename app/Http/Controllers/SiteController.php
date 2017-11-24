@@ -31,8 +31,8 @@ class SiteController extends Controller
       return redirect('/');
     }
 
-    public function experienceIndex(WorkExperience $id) {
-      $workExperience = WorkExperience::where('id', $id)->firstOrFail();
-      return view('showcase.index')->with('experience', $workExperience);
+    public function experienceIndex($id) {
+      $experience = WorkExperience::where('id', $id)->firstOrFail();
+      return view('experiences.index')->with('experience', $experience);
     }
 }

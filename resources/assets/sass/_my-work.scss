@@ -1,6 +1,7 @@
 .my-work {
   background: $brand-main-warm;
   color: $brand-main-flat;
+  padding-bottom: 3em;
 
   .main-title {
     margin-bottom: 0;
@@ -18,16 +19,31 @@
   }
 
   .menu {
-    background: $brand-main-flat;
-    .menu-option {
-      color: $brand-main-cool;
+    .menu-slot {
       min-width: 33.33333%;
+      margin: .5em 0;
+
+      a {
+        text-decoration: none;
+      }
+    }
+
+    .menu-option {
+      background: $brand-main-flat;
+      color: $brand-main-cool;
+      max-width: 18em;
+      border-radius: 40px;
+      line-height: 1.2;
       padding: .5em 0;
 
       &:hover {
         transition: background, .5s;
         background: $brand-main-cool;
         color: $brand-main-flat;
+      }
+
+      small {
+        font-size: 65%;
       }
     }
   }

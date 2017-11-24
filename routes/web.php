@@ -14,3 +14,5 @@
 Route::get('/', 'SiteController@home');
 
 Route::post('/send', 'SiteController@sendMail');
+
+Route::get('/experience/{id}', 'SiteController@experienceIndex');

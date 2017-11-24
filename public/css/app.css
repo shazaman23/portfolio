@@ -8510,7 +8510,7 @@ hr {
 .about-me {
   background: #555555;
   color: #ffffff;
-  padding-bottom: 5em;
+  padding-bottom: 3em;
 }
 
 .about-me hr {
@@ -8560,6 +8560,7 @@ hr {
 .my-work {
   background: #61cdf5;
   color: #ffffff;
+  padding-bottom: 3em;
 }
 
 .my-work .main-title {
@@ -8577,13 +8578,21 @@ hr {
   margin: 4.5em auto;
 }
 
-.my-work .menu {
-  background: #ffffff;
+.my-work .menu .menu-slot {
+  min-width: 33.33333%;
+  margin: .5em 0;
+}
+
+.my-work .menu .menu-slot a {
+  text-decoration: none;
 }
 
 .my-work .menu .menu-option {
+  background: #ffffff;
   color: #555555;
-  min-width: 33.33333%;
+  max-width: 18em;
+  border-radius: 40px;
+  line-height: 1.2;
   padding: .5em 0;
 }
 
@@ -8592,6 +8601,10 @@ hr {
   transition: background, .5s;
   background: #555555;
   color: #ffffff;
+}
+
+.my-work .menu .menu-option small {
+  font-size: 65%;
 }
 
 .contact-me {
@@ -8634,6 +8647,17 @@ hr {
 
 .contact-me .email-form .simple-set:nth-of-type(2) {
   padding-left: 1em;
+}
+
+.showcase {
+  background: #61cdf5;
+  color: #ffffff;
+  min-height: 690px;
+  padding-bottom: 3em;
+}
+
+.showcase .features {
+  background: #555555;
 }
 
 .footer .contact-info {
