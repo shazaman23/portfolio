@@ -8375,6 +8375,36 @@ button.close {
   transition: background, .5s;
 }
 
+.showcase .display.ipad {
+  background: url("/img/ipad.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position-x: center;
+}
+
+.showcase .display.ipad .screen-demo {
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position-x: center !important;
+  -webkit-transition: background, .5s;
+  transition: background, .5s;
+}
+
+.showcase .display.cellphone {
+  background: url("/img/cellphone-black-with-button.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position-x: center;
+}
+
+.showcase .display.cellphone .screen-demo {
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position-x: center !important;
+  -webkit-transition: background, .5s;
+  transition: background, .5s;
+}
+
 /*
 Flaticon icon font: Flaticon
 Creation date: 19/11/2017 09:25
@@ -8656,8 +8686,35 @@ hr {
   padding-bottom: 3em;
 }
 
+.showcase .main-title {
+  margin: 1em;
+}
+
 .showcase .features {
   background: #555555;
+  border-radius: 10px;
+  padding: 1em 3em;
+  font-size: 18px;
+}
+
+.showcase .features a {
+  text-decoration: underline;
+}
+
+.showcase .display.ipad .screen-demo {
+  background: #fff;
+  width: 282px;
+  height: 384px;
+  margin: 1.5em auto;
+  margin-bottom: 2.3em;
+}
+
+.showcase .display.cellphone .screen-demo {
+  background: #fff;
+  width: 240px;
+  height: 384px;
+  margin: 2.8em auto;
+  margin-bottom: 2.9em;
 }
 
 .footer .contact-info {

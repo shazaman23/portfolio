@@ -23,3 +23,35 @@
   background-position-x: center !important;
   transition: background, .5s;
 }
+
+.showcase {
+  .display {
+    &.ipad {
+      background: url("/img/ipad.png");
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position-x: center;
+
+      .screen-demo {
+        background-repeat: no-repeat !important;
+        background-size: cover !important;
+        background-position-x: center !important;
+        transition: background, .5s;
+      }
+    }
+
+    &.cellphone {
+      background: url("/img/cellphone-black-with-button.png");
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position-x: center;
+
+      .screen-demo {
+        background-repeat: no-repeat !important;
+        background-size: cover !important;
+        background-position-x: center !important;
+        transition: background, .5s;
+      }
+    }
+  }
+}
