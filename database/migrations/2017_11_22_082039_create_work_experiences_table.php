@@ -22,6 +22,8 @@ class CreateWorkExperiencesTable extends Migration
             $table->string('url');
             $table->string('myPart');
             $table->string('backgroundImage');
+            $table->string('demoText')->nullable();
+            $table->boolean('noMobile');
             $table->timestamps();
         });
     }

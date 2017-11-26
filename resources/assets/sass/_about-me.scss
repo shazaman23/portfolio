@@ -26,6 +26,52 @@
       animation-duration: .4s;
     }
 
+    &.is-open {
+      .strip-content {
+        .strip-label {
+          display: none;
+        }
+
+        .strip-icon {
+          display: none;
+        }
+
+        .strip-image {
+          display: inline-block;
+        }
+
+        .strip-paragraph {
+          display: inline-block;
+        }
+      }
+    }
+
+    .strip-content {
+      max-width: 50%;
+
+      .strip-label {
+
+      }
+
+      .strip-icon {
+
+      }
+
+      .strip-image {
+        display: none;
+      }
+
+      .strip-paragraph {
+        display: none;
+        margin: 0 3em;
+        background: $brand-main-flat;
+        color: black;
+        padding: 1.5em 2em 1em 2em;
+        border-radius: 10px;
+      }
+    }
+
+
   }
 }
 

@@ -8567,6 +8567,39 @@ hr {
           animation-duration: .4s;
 }
 
+.about-me .strip.is-open .strip-content .strip-label {
+  display: none;
+}
+
+.about-me .strip.is-open .strip-content .strip-icon {
+  display: none;
+}
+
+.about-me .strip.is-open .strip-content .strip-image {
+  display: inline-block;
+}
+
+.about-me .strip.is-open .strip-content .strip-paragraph {
+  display: inline-block;
+}
+
+.about-me .strip .strip-content {
+  max-width: 50%;
+}
+
+.about-me .strip .strip-content .strip-image {
+  display: none;
+}
+
+.about-me .strip .strip-content .strip-paragraph {
+  display: none;
+  margin: 0 3em;
+  background: #ffffff;
+  color: black;
+  padding: 1.5em 2em 1em 2em;
+  border-radius: 10px;
+}
+
 @-webkit-keyframes strip-anim {
   from {
     color: #ffffff;
@@ -8686,6 +8719,15 @@ hr {
   padding-bottom: 3em;
 }
 
+.showcase .back-btn {
+  top: 6%;
+  left: 4%;
+}
+
+.showcase .back-btn a {
+  color: #ffffff;
+}
+
 .showcase .main-title {
   margin: 1em;
 }
@@ -8697,12 +8739,8 @@ hr {
   font-size: 18px;
 }
 
-.showcase .features a {
-  text-decoration: underline;
-}
-
 .showcase .display.ipad .screen-demo {
-  background: #fff;
+  background: #ffffff;
   width: 282px;
   height: 384px;
   margin: 1.5em auto;
@@ -8710,11 +8748,17 @@ hr {
 }
 
 .showcase .display.cellphone .screen-demo {
-  background: #fff;
+  background: #ffffff;
   width: 240px;
   height: 384px;
   margin: 2.8em auto;
   margin-bottom: 2.9em;
+}
+
+.showcase .display .screen-demo.no-mobile {
+  background: white;
+  color: #555555;
+  padding: 6em 2em;
 }
 
 .footer .contact-info {

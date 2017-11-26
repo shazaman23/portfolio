@@ -26,13 +26,26 @@
       <h2 class="main-title text-center font-weight-bold">About Me</h2>
 
       <!-- FAMILY -->
-      <div class="strip d-flex flex-row align-items-center">
+      <div class="strip d-flex flex-row align-items-center" v-bind:class="{ 'is-open': stripActive[0] }" v-on:click="toggleIsOpen(0)">
 
-        <h4 class="flex-1 text-center">Family</h4>
+        <div class="flex-1 text-center strip-content">
 
-        <div class="flex-1 text-center">
-          <!-- <img src="{{ URL::asset('/img/icons/home.png') }}" alt="family icon"> -->
-          <i class="fi flaticon-home large"></i>
+          <h4 class="strip-label">Family</h4>
+
+          <div class="strip-image">
+            Picture will go here
+          </div>
+
+        </div>
+
+        <div class="flex-1 text-center strip-content">
+
+          <i class="fi flaticon-home large strip-icon"></i>
+
+          <div class="strip-paragraph">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div>
+
         </div>
 
       </div>
@@ -40,13 +53,26 @@
       <hr>
 
       <!-- GAMING -->
-      <div class="strip d-flex flex-row-reverse align-items-center">
+      <div class="strip d-flex flex-row-reverse align-items-center" v-bind:class="{ 'is-open': stripActive[1] }" v-on:click="toggleIsOpen(1)">
 
-        <h4 class="flex-1 text-center">Gaming</h4>
+        <div class="flex-1 text-center strip-content">
 
-        <div class="flex-1 text-center">
-          <!-- <img src="{{ URL::asset('/img/icons/gamepad.png') }}" alt="gaming icon"> -->
-          <i class="fi flaticon-gamepad large"></i>
+          <h4 class="strip-label">Gaming</h4>
+
+          <div class="strip-image">
+            Picture will go here
+          </div>
+
+        </div>
+
+        <div class="flex-1 text-center strip-content">
+
+          <i class="fi flaticon-gamepad large strip-icon"></i>
+
+          <div class="strip-paragraph">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div>
+
         </div>
 
       </div>
@@ -54,13 +80,26 @@
       <hr>
 
       <!-- LEARNING -->
-      <div class="strip d-flex flex-row align-items-center">
+      <div class="strip d-flex flex-row align-items-center" v-bind:class="{ 'is-open': stripActive[2] }" v-on:click="toggleIsOpen(2)">
 
-        <h4 class="flex-1 text-center">Learning</h4>
+        <div class="flex-1 text-center strip-content">
 
-        <div class="flex-1 text-center">
-          <!-- <img src="{{ URL::asset('/img/icons/books.png') }}" alt="study icon"> -->
-          <i class="fi flaticon-books large"></i>
+          <h4 class="strip-label">Learning</h4>
+
+          <div class="strip-image">
+            Picture will go here
+          </div>
+
+        </div>
+
+        <div class="flex-1 text-center strip-content">
+
+          <i class="fi flaticon-books large strip-icon"></i>
+
+          <div class="strip-paragraph">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div>
+
         </div>
 
       </div>
@@ -68,13 +107,26 @@
       <hr>
 
       <!-- MOVIES -->
-      <div class="strip d-flex flex-row-reverse align-items-center">
+      <div class="strip d-flex flex-row-reverse align-items-center" v-bind:class="{ 'is-open': stripActive[3] }" v-on:click="toggleIsOpen(3)">
 
-        <h4 class="flex-1 text-center">Movies</h4>
+        <div class="flex-1 text-center strip-content">
 
-        <div class="flex-1 text-center">
-          <!-- <img src="{{ URL::asset('/img/icons/tv.png') }}" alt="tv icon"> -->
-          <i class="fi flaticon-tv large"></i>
+          <h4 class="strip-label">Movies</h4>
+
+          <div class="strip-image">
+            Picture will go here
+          </div>
+
+        </div>
+
+        <div class="flex-1 text-center strip-content">
+
+          <i class="fi flaticon-tv large strip-icon"></i>
+
+          <div class="strip-paragraph">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div>
+
         </div>
 
       </div>
@@ -82,13 +134,26 @@
       <hr>
 
       <!-- ADVENTURE -->
-      <div class="strip d-flex flex-row align-items-center">
+      <div class="strip d-flex flex-row align-items-center" v-bind:class="{ 'is-open': stripActive[4] }" v-on:click="toggleIsOpen(4)">
 
-        <h4 class="flex-1 text-center">Adventure</h4>
+        <div class="flex-1 text-center strip-content">
 
-        <div class="flex-1 text-center">
-          <!-- <img src="{{ URL::asset('/img/icons/hiker.png') }}" alt="adventure icon"> -->
-          <i class="fi flaticon-hiker large"></i>
+          <h4 class="strip-label">Adventure</h4>
+
+          <div class="strip-image">
+            Picture will go here
+          </div>
+
+        </div>
+
+        <div class="flex-1 text-center strip-content">
+
+          <i class="fi flaticon-hiker large strip-icon"></i>
+
+          <div class="strip-paragraph">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div>
+
         </div>
 
       </div>
@@ -96,7 +161,7 @@
     </div>
   </div>
 
-  <div class="row my-work">
+  <div id="my-work" class="row my-work">
     <div class="w-100 d-flex flex-column">
 
       <!-- MAIN TITLE -->
@@ -123,46 +188,6 @@
             </a>
           </div>
         @endforeach
-
-        <!-- <div class="flex-1 text-center menu-slot">
-          <div id="uk2-dropdown" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-dropdown.png')">
-            UK2 - Dropdown Cart
-            <br>
-            <small class="text-uppercase">Developed</small>
-          </div>
-        </div>
-
-        <div class="flex-1 text-center menu-slot">
-          <div id="uk2-dont-forget" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-dont-forget.png')">
-            UK2 - Don't Forget Overlay
-            <br>
-            <small class="text-uppercase">Developed</small>
-          </div>
-        </div>
-
-        <div class="flex-1 text-center menu-slot">
-          <div id="uk2-bulk-search" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-bulk-search.png')">
-            UK2 - Bulk Domain Search
-            <br>
-            <small class="text-uppercase">Developed</small>
-          </div>
-        </div>
-
-        <div class="flex-1 text-center menu-slot">
-          <div id="uk2-disclaimers" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('uk2-disclaimers.png')">
-            UK2 - Dynamic Disclaimers
-            <br>
-            <small class="text-uppercase">Designed & Developed</small>
-          </div>
-        </div>
-
-        <div class="flex-1 text-center menu-slot">
-          <div id="benegov-site" class="menu-option mx-auto" v-on:mouseOver="setScreenBg('benegov-site.png')">
-            Benegov Website
-            <br>
-            <small class="text-uppercase">Designed & Developed</small>
-          </div>
-        </div> -->
 
       </div>
       <!-- END MENU -->

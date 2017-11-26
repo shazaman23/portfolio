@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
           'url' => "https://www.uk2.net/",
           'myPart' => "Developed",
           'backgroundImage' => "uk2-dropdown.png",
+          'demoText' => "Try adding an item or two to your cart then return to the UK2 homepage. Once there you should see a green button in the top right corner of the page with a small basket icon. Hover over that button to see how the Dropdown Cart works!",
+          'noMobile' => false,
           'created_at' => date("Y-m-d h:i:s"),
           'updated_at' => date("Y-m-d h:i:s")
         ]);
@@ -31,6 +33,8 @@ class DatabaseSeeder extends Seeder
           'url' => "https://www.uk2.net/",
           'myPart' => "Developed",
           'backgroundImage' => "uk2-dont-forget.png",
+          'demoText' => "Try adding an item or two to your cart then return to the UK2 homepage. Once there, move your to the close button on your browser to see the Don't Forget Overlay in action!",
+          'noMobile' => true,
           'created_at' => date("Y-m-d h:i:s"),
           'updated_at' => date("Y-m-d h:i:s")
         ]);
@@ -42,6 +46,8 @@ class DatabaseSeeder extends Seeder
           'url' => "https://www.uk2.net/domain-names/bulk-domain-registration/",
           'myPart' => "Developed",
           'backgroundImage' => "uk2-bulk-search.png",
+          'demoText' => NULL,
+          'noMobile' => false,
           'created_at' => date("Y-m-d h:i:s"),
           'updated_at' => date("Y-m-d h:i:s")
         ]);
@@ -49,10 +55,12 @@ class DatabaseSeeder extends Seeder
           'brand' => "UK2",
           'title' => "Dynamic Disclaimers",
           'problem' => "UK2 found that the disclaimers on their site were confusing at times. Some pages had multiple disclaimers with different definitions using the same symbols. Some pages had disclaimers but the definitions for each symbol were hard to find. UK2 needed a better way to use and organize discliamers on their site.",
-          'description' => "I designed and developed a system in which all the disclaimers were located in one file. PHP is then used on any page that has a disclaimer icon to generate an accurate list of disclaimer definitions at the bottom of the page. Additionally, links were added to each symbol so that a user could click a disclaimer symbol in line and an overlay with the definition would popup.",
+          'description' => "I designed and developed a system in which all the disclaimers were located in one file. PHP is then used on any page that has a disclaimer icon to generate an accurate list of disclaimer definitions at the bottom of the page. Additionally, links were added to each symbol so that a user could click a disclaimer symbol inline and an overlay with the definition would popup.",
           'url' => "https://www.uk2.net/#disclaimer-section",
           'myPart' => "Designed & Developed",
           'backgroundImage' => "uk2-disclaimers.png",
+          'demoText' => "Try clicking a disclaimer symbol such as an * to see the disclaimer overlay. To see a list of disclaimers used on any given page, scroll to the bottom of the page to the section titled 'Disclaimers'.",
+          'noMobile' => false,
           'created_at' => date("Y-m-d h:i:s"),
           'updated_at' => date("Y-m-d h:i:s")
         ]);
@@ -64,6 +72,8 @@ class DatabaseSeeder extends Seeder
           'url' => "http://benegov.kylebarney.io/open-meetings",
           'myPart' => "Designed & Developed",
           'backgroundImage' => "benegov-site.png",
+          'demoText' => NULL,
+          'noMobile' => false,
           'created_at' => date("Y-m-d h:i:s"),
           'updated_at' => date("Y-m-d h:i:s")
         ]);
