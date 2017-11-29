@@ -101,7 +101,7 @@ var app = new Vue({
     bgCount: 5,
     currentBg: 0,
     allBgs: ['benegov-site.png', 'uk2-bulk-search.png', 'uk2-disclaimers.png', 'uk2-dont-forget.png', 'uk2-dropdown.png'],
-    stripActive: [false, false, true, true, false],
+    stripActive: [false, false, false, false, false],
     timer: '',
     timeout: false
   },

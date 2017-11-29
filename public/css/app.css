@@ -8600,6 +8600,10 @@ hr {
   border-radius: 10px;
 }
 
+.about-me .strip .strip-image img {
+  max-height: 350px;
+}
+
 @-webkit-keyframes strip-anim {
   from {
     color: #ffffff;

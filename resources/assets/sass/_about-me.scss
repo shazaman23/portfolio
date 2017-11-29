@@ -49,14 +49,6 @@
     .strip-content {
       max-width: 50%;
 
-      .strip-label {
-
-      }
-
-      .strip-icon {
-
-      }
-
       .strip-image {
         display: none;
       }
@@ -71,7 +63,11 @@
       }
     }
 
-
+    .strip-image {
+      img {
+        max-height: 350px;
+      }
+    }
   }
 }
 

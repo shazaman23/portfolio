@@ -33,7 +33,7 @@
           <h4 class="strip-label">Family</h4>
 
           <div class="strip-image">
-            Picture will go here
+            <img src="/img/family-cabin.jpg" alt="family picture">
           </div>
 
         </div>
@@ -60,7 +60,8 @@
           <h4 class="strip-label">Gaming</h4>
 
           <div class="strip-image">
-            Picture will go here
+            <!-- I took this picture myself! Crazy, huh? Phone cameras are pretty great... -->
+            <img src="/img/betrayal-game-slim.jpg" alt="board game">
           </div>
 
         </div>
@@ -87,7 +88,8 @@
           <h4 class="strip-label">Learning</h4>
 
           <div class="strip-image">
-            Picture will go here
+            <!-- This picture was taken by the lovely Nikelle Maughan -->
+            <img src="/img/studying.jpg" alt="studying">
           </div>
 
         </div>
@@ -141,7 +143,7 @@
           <h4 class="strip-label">Adventure</h4>
 
           <div class="strip-image">
-            Picture will go here
+            <img src="/img/jetski-day.jpg" alt="jetski adventure">
           </div>
 
         </div>
