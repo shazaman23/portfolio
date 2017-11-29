@@ -24,7 +24,7 @@ const app = new Vue({
       bgCount: 5,
       currentBg: 0,
       allBgs: ['benegov-site.png', 'uk2-bulk-search.png', 'uk2-disclaimers.png', 'uk2-dont-forget.png', 'uk2-dropdown.png'],
-      stripActive: [false, false, false, false, false],
+      stripActive: [false, false, true, true, false],
       timer: '',
       timeout: false
     },
@@ -53,9 +53,14 @@ const app = new Vue({
         this.timeout = true;
       },
       toggleIsOpen: function(i) {
-        console.log("First: " + this.stripActive[i]);
-        this.stripActive[i] = !this.stripActive[i];
-        console.log("Last: " + this.stripActive[i]);
+        var status = this.stripActive.slice(i, i + 1).pop();
+        this.stripActive = this.stripActive.map(function(val, index) {
+          if (!status && i === index) {
+            return true;
+          } else {
+            return false;
+          }
+        });
       }
     }
 });
