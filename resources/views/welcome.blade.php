@@ -33,6 +33,7 @@
           <h4 class="strip-label">Family</h4>
 
           <div class="strip-image">
+            <!-- This picture was taken by my Mom, Kathleen Killpack -->
             <img src="/img/family-cabin.jpg" alt="family picture">
           </div>
 
@@ -115,6 +116,7 @@
 
           <h4 class="strip-label">Movies</h4>
 
+          <!-- Again, I took this picture. Maybe I should go into photography... -->
           <div class="strip-image">
             Picture will go here
           </div>
@@ -143,6 +145,7 @@
           <h4 class="strip-label">Adventure</h4>
 
           <div class="strip-image">
+            <!-- Picture taken by Sheri Kerr -->
             <img src="/img/jetski-day.jpg" alt="jetski adventure">
           </div>
 
