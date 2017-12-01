@@ -8525,6 +8525,20 @@ hr {
   padding: 0 2em;
 }
 
+@media (max-width: 425px) {
+  .main-title {
+    margin-top: .75em;
+    margin-left: 1em;
+    margin-right: 1em;
+  }
+}
+
+@media (max-width: 375px) {
+  .main-title {
+    font-size: 45px;
+  }
+}
+
 .flex-1 {
   -webkit-box-flex: 1;
       -ms-flex: 1 1 auto;
@@ -8548,6 +8562,24 @@ hr {
 .home .title {
   -webkit-transform: scale(1.5);
           transform: scale(1.5);
+}
+
+@media (max-width: 1100px) {
+  .home {
+    background-position-x: -110px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home {
+    background-position-x: -450px;
+  }
+
+  .home .title {
+    background: white;
+    padding: .5em 1em;
+    border-radius: 100px;
+  }
 }
 
 .about-me {
@@ -8705,6 +8737,27 @@ hr {
   }
 }
 
+@media (max-width: 475px) {
+  .about-me .main-title {
+    margin-bottom: 0;
+  }
+
+  .about-me .strip .strip-content .strip-image img {
+    max-height: 200px;
+  }
+
+  .about-me .strip .strip-content .strip-paragraph {
+    margin: 0;
+    padding: 1em;
+  }
+}
+
+@media (max-width: 375px) {
+  .about-me.row {
+    padding: 0 1em;
+  }
+}
+
 .my-work {
   background: #61cdf5;
   color: #ffffff;
@@ -8755,6 +8808,29 @@ hr {
   font-size: 65%;
 }
 
+@media (max-width: 850px) {
+  .my-work .menu .menu-slot {
+    min-width: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .my-work .computer-demo {
+    width: 100%;
+  }
+
+  .my-work .computer-demo .screen-demo {
+    width: 93%;
+    margin: 13% auto;
+  }
+}
+
+@media (max-width: 625px) {
+  .my-work .computer-demo .screen-demo {
+    margin: 12% auto;
+  }
+}
+
 .contact-me {
   background: #555555;
   color: #ffffff;
@@ -8795,6 +8871,25 @@ hr {
 
 .contact-me .email-form .simple-set:nth-of-type(2) {
   padding-left: 1em;
+}
+
+@media (max-width: 700px) {
+  .contact-me .email-form .form-row .mobile-pop {
+    -webkit-box-flex: 1;
+        -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+    padding: 0;
+  }
+}
+
+@media (max-width: 375px) {
+  .contact-me.row {
+    padding: 0 1em;
+  }
+
+  .contact-me .main-email {
+    font-size: 17px;
+  }
 }
 
 .showcase {
@@ -9009,6 +9104,7 @@ hr {
     -webkit-box-direction: normal;
         -ms-flex-direction: column;
             flex-direction: column;
+    margin: 0 0 1em 0;
   }
 
   .footer .icon-bib ul {

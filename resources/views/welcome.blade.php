@@ -198,9 +198,9 @@
       <h2 class="main-title text-center font-weight-bold">My Work</h2>
 
       <!-- COMPUTER DEMO -->
-      <div class="computer-demo">
+      <div class="computer-demo" v-bind:style="[{ marginBottom: monitorMarginBottom + 'px' }]">
         <div class="screen-demo"
-             v-bind:style="[{ background: 'url(' + screenPath + ')' }, { backgroundSize: 'contain' }, { backgroundRepeat: 'no-repeat'}]">
+             v-bind:style="[{ background: 'url(' + screenPath + ')' }, { backgroundSize: 'contain' }, { backgroundRepeat: 'no-repeat'}, { width: screenDim.width + 'px' }, { height: screenDim.height + 'px' }]">
         </div>
       </div>
 
@@ -244,7 +244,7 @@
         <div class="form-row">
 
           <!-- NAME -->
-          <div class="form-group col simple-set">
+          <div class="form-group col simple-set mobile-pop">
 
             <label for="inputName">Name: </label>
 
@@ -263,7 +263,7 @@
           </div>
 
           <!-- EMAIL -->
-          <div class="form-group col simple-set">
+          <div class="form-group col simple-set mobile-pop">
 
             <label for="inputEmail">Return Email: </label>
 
@@ -318,7 +318,7 @@
       <!-- ICON ATTRIBUTIONS -->
       <h4 class="mx-auto">Icon Attributions</h4>
 
-      <div class="d-flex flex-row icon-bib">
+      <div class="d-flex icon-bib">
         <ul class="flex-1">
           <li>Books icon made by <a href="https://www.flaticon.com/authors/zlatko-najdenovski">Zlatko Najdenovski</a> from <a href="https://www.flaticon.com/">www.flaticon.com</a></li>
           <li>Computer monitor icon made by <a href="http://icon-works.com">Icon Works</a> from <a href="https://www.flaticon.com/">www.flaticon.com</a></li>
@@ -337,7 +337,7 @@
       </div>
 
       <!-- CONTACT INFO -->
-      <div class="w-100 d-flex flex-row contact-info text-center">
+      <div class="w-100 d-flex contact-info text-center">
 
         <!-- GITHUB -->
         <div class="flex-1">

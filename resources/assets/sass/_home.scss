@@ -9,3 +9,21 @@
     transform: scale(1.5);
   }
 }
+
+@media(max-width: 1100px) {
+  .home {
+    background-position-x: -110px;
+  }
+}
+
+@media(max-width: 768px) {
+  .home {
+    background-position-x: -450px;
+
+    .title {
+      background: white;
+      padding: .5em 1em;
+      border-radius: 100px;
+    }
+  }
+}

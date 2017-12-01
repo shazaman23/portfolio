@@ -48,3 +48,35 @@
     }
   }
 }
+
+@media(max-width: 850px) {
+  .my-work {
+    .menu {
+      .menu-slot {
+        min-width: 50%;
+      }
+    }
+  }
+}
+
+@media(max-width: 768px) {
+  .my-work {
+    .computer-demo {
+      width: 100%;
+      .screen-demo {
+        width: 93%;
+        margin: 13% auto;
+      }
+    }
+  }
+}
+
+@media(max-width: 625px) {
+  .my-work {
+    .computer-demo {
+      .screen-demo {
+        margin: 12% auto;
+      }
+    }
+  }
+}

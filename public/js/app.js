@@ -992,34 +992,61 @@ Vue.component('example-component', __webpack_require__(38));
 var app = new Vue({
   el: '#app',
   data: {
-    screenPath: '/img/screenshots/benegov-site.png',
+    allBgs: ['benegov-site.png', 'uk2-bulk-search.png', 'uk2-disclaimers.png', 'uk2-dont-forget.png', 'uk2-dropdown.png'],
     bgCount: 5,
     currentBg: 0,
-    allBgs: ['benegov-site.png', 'uk2-bulk-search.png', 'uk2-disclaimers.png', 'uk2-dont-forget.png', 'uk2-dropdown.png'],
+    monitorMarginBottom: 0,
+    screenDim: { 'width': 632, 'height': 422 },
+    screenPath: '/img/screenshots/benegov-site.png',
     stripActive: [false, false, false, false, false],
-    timer: '',
-    timeout: false
+    timeout: false,
+    timer: ''
   },
   created: function created() {
     this.timer = setInterval(this.updateScreenBg, 5000);
     setTimeout(this.triggerTimeout, 5000);
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize("start");
   },
   methods: {
-    setScreenBg: function setScreenBg(element) {
-      this.screenPath = '/img/screenshots/' + element;
-      clearInterval(this.timer);
-      this.timer = setInterval(this.restartScreenUpdate, 10000);
-    },
-    updateScreenBg: function updateScreenBg() {
-      this.screenPath = '/img/screenshots/' + this.allBgs[this.currentBg];
-      this.currentBg++;
-      if (this.currentBg >= this.bgCount) {
-        this.currentBg = 0;
+    handleResize: function handleResize(event) {
+      if (window.innerWidth > 768) {
+        this.screenDim.width = 632;
+        this.screenDim.height = 422;
+        this.monitorMarginBottom = 0;
+      } else if (window.innerWidth > 625) {
+        this.screenDim.width = window.innerWidth / 1.25;
+        this.screenDim.height = this.screenDim.width / 1.48;
+      } else if (window.innerWidth > 545) {
+        this.screenDim.width = window.innerWidth / 1.28;
+        this.screenDim.height = this.screenDim.width / 1.46;
+      } else if (window.innerWidth > 450) {
+        this.screenDim.width = window.innerWidth / 1.31;
+        this.screenDim.height = this.screenDim.width / 1.46;
+      } else if (window.innerWidth > 400) {
+        this.screenDim.width = window.innerWidth / 1.36;
+        this.screenDim.height = this.screenDim.width / 1.45;
+      } else if (window.innerWidth > 350) {
+        this.screenDim.width = window.innerWidth / 1.40;
+        this.screenDim.height = this.screenDim.width / 1.46;
+      } else {
+        this.screenDim.width = window.innerWidth / 1.46;
+        this.screenDim.height = this.screenDim.width / 1.46;
+      }
+      if (window.innerWidth > 768) {
+        this.monitorMarginBottom = 0;
+      } else {
+        this.monitorMarginBottom = (768 - window.innerWidth) * -1;
       }
     },
     restartScreenUpdate: function restartScreenUpdate() {
       clearInterval(this.timer);
       this.timer = setInterval(this.updateScreenBg, 5000);
+    },
+    setScreenBg: function setScreenBg(element) {
+      this.screenPath = '/img/screenshots/' + element;
+      clearInterval(this.timer);
+      this.timer = setInterval(this.restartScreenUpdate, 10000);
     },
     triggerTimeout: function triggerTimeout() {
       this.timeout = true;
@@ -1033,6 +1060,13 @@ var app = new Vue({
           return false;
         }
       });
+    },
+    updateScreenBg: function updateScreenBg() {
+      this.screenPath = '/img/screenshots/' + this.allBgs[this.currentBg];
+      this.currentBg++;
+      if (this.currentBg >= this.bgCount) {
+        this.currentBg = 0;
+      }
     }
   }
 });

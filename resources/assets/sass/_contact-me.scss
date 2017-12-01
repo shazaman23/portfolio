@@ -39,3 +39,28 @@
     }
   }
 }
+
+@media(max-width: 700px) {
+  .contact-me {
+    .email-form {
+      .form-row {
+        .mobile-pop {
+          flex: 1 1 auto;
+          padding: 0;
+        }
+      }
+    }
+  }
+}
+
+@media(max-width: 375px) {
+  .contact-me {
+    &.row {
+      padding: 0 1em;
+    }
+    
+    .main-email {
+      font-size: 17px;
+    }
+  }
+}

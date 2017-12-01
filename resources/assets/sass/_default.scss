@@ -44,3 +44,17 @@ hr {
 .row {
   padding: 0 2em;
 }
+
+@media(max-width: 425px) {
+  .main-title {
+    margin-top: .75em;
+    margin-left: 1em;
+    margin-right: 1em;
+  }
+}
+
+@media(max-width: 375px) {
+  .main-title {
+    font-size: 45px;
+  }
+}

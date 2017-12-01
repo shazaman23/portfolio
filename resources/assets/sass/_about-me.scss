@@ -153,3 +153,34 @@
     }
   }
 }
+
+@media(max-width: 475px) {
+  .about-me {
+    .main-title {
+      margin-bottom: 0;
+    }
+
+    .strip {
+      .strip-content {
+        .strip-image {
+          img {
+            max-height: 200px;
+          }
+        }
+
+        .strip-paragraph {
+          margin: 0;
+          padding: 1em;
+        }
+      }
+    }
+  }
+}
+
+@media(max-width: 375px) {
+  .about-me {
+    &.row {
+      padding: 0 1em;
+    }
+  }
+}
