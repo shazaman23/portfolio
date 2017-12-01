@@ -2,15 +2,12 @@
 
 @section('content')
 
-<div class="content container-fluid">
+<div class="content container-fluid homepage">
 
   <div class="row home">
 
     <!-- MAIN TITLE -->
-    <div class="col-11 offset-1
-                col-md-3 offset-md-1
-                col-lg-2 offset-lg-2
-                align-self-center">
+    <div class="home-banner">
       <div class="title">
         <h1 class="display-3 text-left"><strong>Jake <br>Killpack</strong></h1>
         <h5 class="text-muted text-left">Web Developer</h5>
@@ -26,14 +23,14 @@
       <h2 class="main-title text-center font-weight-bold">About Me</h2>
 
       <!-- FAMILY -->
-      <div class="strip d-flex flex-row align-items-center" v-bind:class="{ 'is-open': stripActive[0] }" v-on:click="toggleIsOpen(0)">
+      <div class="strip" v-bind:class="{ 'is-open': stripActive[0] }" v-on:click="toggleIsOpen(0)">
 
         <div class="flex-1 text-center strip-content">
 
           <h4 class="strip-label">Family</h4>
 
           <div class="strip-image">
-            <!-- This picture was taken by my Mom, Kathleen Killpack -->
+            <!-- This picture was taken by my awesome Mom, Kathleen Killpack -->
             <img src="/img/family-cabin.jpg" alt="family picture">
           </div>
 
@@ -44,7 +41,14 @@
           <i class="fi flaticon-home large strip-icon"></i>
 
           <div class="strip-paragraph">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            My family is probably the biggest contributing factor to who I am today.
+            I hail from a family of 2 loving parents and 7 awesome siblings. My parents
+            taught me invaluable lessons in how to manage my time well and helped me
+            see that I could do almost anything with the proper mindset and determination.
+            My brothers and sisters taught me how to have fun and how to work well
+            with others (a trait that did not come naturally to me as a child). We still
+            regularly meet to share food, laughs, and fun and for that I consider myself
+            to be exceedingly lucky.
           </div>
 
         </div>
@@ -54,7 +58,7 @@
       <hr>
 
       <!-- GAMING -->
-      <div class="strip d-flex flex-row-reverse align-items-center" v-bind:class="{ 'is-open': stripActive[1] }" v-on:click="toggleIsOpen(1)">
+      <div class="strip" v-bind:class="{ 'is-open': stripActive[1] }" v-on:click="toggleIsOpen(1)">
 
         <div class="flex-1 text-center strip-content">
 
@@ -72,7 +76,12 @@
           <i class="fi flaticon-gamepad large strip-icon"></i>
 
           <div class="strip-paragraph">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            Gaming is at the core of who I am. I love games of all shapes and sizes.
+            Be it dice, cards, board games, word games, role-playing games, or video
+            games, a good game is my idea of a good time. While I frequently play
+            games as a way to unwind or relax with friends and family, I feel that
+            my gaming habits have also contributed to my professional skillset. Each
+            game is just another problem to be solved or system to be optimized.
           </div>
 
         </div>
@@ -82,7 +91,7 @@
       <hr>
 
       <!-- LEARNING -->
-      <div class="strip d-flex flex-row align-items-center" v-bind:class="{ 'is-open': stripActive[2] }" v-on:click="toggleIsOpen(2)">
+      <div class="strip" v-bind:class="{ 'is-open': stripActive[2] }" v-on:click="toggleIsOpen(2)">
 
         <div class="flex-1 text-center strip-content">
 
@@ -100,7 +109,12 @@
           <i class="fi flaticon-books large strip-icon"></i>
 
           <div class="strip-paragraph">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            I love learning! (No really... Nerd alert!) One of the things that draws
+            me to the web is the help it provides in my search to learn new, exciting
+            things. The desire to learn drives me in many aspects of my life, but
+            makes a significant impact on my professional life. I find that a job is
+            much more appealing to me if it offers me a chance to learn something new
+            while I create something great.
           </div>
 
         </div>
@@ -110,15 +124,15 @@
       <hr>
 
       <!-- MOVIES -->
-      <div class="strip d-flex flex-row-reverse align-items-center" v-bind:class="{ 'is-open': stripActive[3] }" v-on:click="toggleIsOpen(3)">
+      <div class="strip" v-bind:class="{ 'is-open': stripActive[3] }" v-on:click="toggleIsOpen(3)">
 
         <div class="flex-1 text-center strip-content">
 
           <h4 class="strip-label">Movies</h4>
 
-          <!-- Again, I took this picture. Maybe I should go into photography... -->
           <div class="strip-image">
-            Picture will go here
+            <!-- Again, I took this picture. Maybe I should go into photography... -->
+            <img src="/img/popcorn.jpg" alt="popcorn">
           </div>
 
         </div>
@@ -128,7 +142,13 @@
           <i class="fi flaticon-tv large strip-icon"></i>
 
           <div class="strip-paragraph">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            If there's anything I enjoy doing more on my free time than playing a good
+            game, it's watching a good movie or TV show. I regularly go to see new
+            movies in theaters and find new shows to watch on various video streaming
+            services. While I know it's generally a huge waste of time, I love everything
+            about it: the drama, the story-telling, the character development, the
+            social commentary, debating theories on/critiquing the film, etc.
+            It's one of my guilty pleasures.
           </div>
 
         </div>
@@ -138,7 +158,7 @@
       <hr>
 
       <!-- ADVENTURE -->
-      <div class="strip d-flex flex-row align-items-center" v-bind:class="{ 'is-open': stripActive[4] }" v-on:click="toggleIsOpen(4)">
+      <div class="strip" v-bind:class="{ 'is-open': stripActive[4] }" v-on:click="toggleIsOpen(4)">
 
         <div class="flex-1 text-center strip-content">
 
@@ -156,7 +176,12 @@
           <i class="fi flaticon-hiker large strip-icon"></i>
 
           <div class="strip-paragraph">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            I'm not the die-hard, adrenaline junkie type, but I do enjoy a bit of
+            adventure now and again. While I spend most of my waking hours in front
+            of some screen or another, I love spending time outdoors! Some of my
+            favoirte adventurous activities include mountain biking, jetskiing,
+            hiking, roadtripping, or snowboarding. I especially love going on adventures
+            with my closest friends and family members.
           </div>
 
         </div>

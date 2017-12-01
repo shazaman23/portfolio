@@ -1,6 +1,10 @@
 .home {
   min-height: 700px;
 
+  .home-banner {
+    margin: auto 15%;
+  }
+
   .title {
     transform: scale(1.5);
   }

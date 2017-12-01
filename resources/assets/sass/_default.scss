@@ -1,3 +1,7 @@
+html, body {
+  overflow-x: hidden !important;
+}
+
 a {
   color: $brand-main-warm;
 
@@ -35,4 +39,8 @@ hr {
     opacity: 0;
     transition: opacity, 1s;
   }
+}
+
+.row {
+  padding: 0 2em;
 }
