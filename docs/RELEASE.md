@@ -17,3 +17,7 @@ Version 1.1.0
     - Ran images through an optimizer to improve load speed.
     - Replaced the character based arrow with a font awesome icon on work experience pages.
     - Added a RELEASE.md with version specifics.
+
+Version 1.1.1
+
+    - Updated more node packages to eliminate vulnerabilities.
