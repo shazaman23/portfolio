@@ -1,23 +1,41 @@
-Version 1.0.0
+Version 0.0.0 (PROJECT START) -- 11/02/2017
 
-    - Live site release.
-    - Created My Work Detail pages for each project listed. 
+    - Set up new laravel site.
+
+Version 1.0.0 (LIVE LAUNCH) -- 11/29/2017
+
+    - Added color theme styles.
+    - Added a background image for the home section.
+    - Added an About Me section.
+    - Added a My Work section.
+    - Added Contact Me page.
+    - Added footer section with icon attributions and social media links.
     - Added Flaticon icons.
+    - Made computer demo in the My Work section that reacts to hovering over each project.
     - Added warm color highlighting to About Me list items.
     - Added About Me item popouts for each topic that have a picture and a paragraph.
+    - Added the ability to send email using mailgun.
+    - Made custom formatted email views to be sent from the contact form.
+    - Added flash messages to update the user when emails are sent or failed.
+    - Added a DB seeder with work experience data.
     - Fix styling issues down to mobile size.
+    - Created My Work Detail pages for each project listed.
+    - Added pictures to each about me item.
 
-Version 1.0.1
+Version 1.0.1 -- 12/01/2017
 
+    - Adjusted mobile styles.
+    - Removed unused pictures.
     - Fully updated the server.
     - Updated all the node packages.
 
-Version 1.1.0
+Version 1.1.0 -- 10/13/2018
 
     - Ran images through an optimizer to improve load speed.
     - Replaced the character based arrow with a font awesome icon on work experience pages.
     - Added a RELEASE.md with version specifics.
 
-Version 1.1.1
+Version 1.1.1 -- 10/26/2018
 
     - Updated more node packages to eliminate vulnerabilities.
+    - Added Snyk tool for composer dependency vulnerability management.
