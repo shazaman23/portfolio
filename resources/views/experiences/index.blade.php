@@ -7,7 +7,7 @@
 
   <!-- BACK BUTTON -->
   <div class="position-absolute back-btn">
-    <a class="text-uppercase" href="/#my-work"><-- Back</a>
+    <a class="text-uppercase" href="/#my-work"><i class="fas fa-arrow-left"></i> Back</a>
   </div>
 
   <!-- MAIN TITLE -->
