@@ -39,3 +39,7 @@ Version 1.1.1 -- 10/26/2018
 
     - Updated more node packages to eliminate vulnerabilities.
     - Added Snyk tool for composer dependency vulnerability management.
+
+Version 1.1.2 -- 02/23/2019
+
+    - Regular node package updates.
