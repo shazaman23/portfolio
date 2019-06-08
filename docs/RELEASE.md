@@ -47,3 +47,8 @@ Version 1.1.2 -- 02/23/2019
 Version 1.1.3 -- 05/18/2019
 
     - Regular node package updates.
+
+Version 1.1.4 -- 06/08/2019
+
+    - Regular node package updates.
+    - Removed yarn.lock
