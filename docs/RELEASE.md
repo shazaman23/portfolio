@@ -52,3 +52,7 @@ Version 1.1.4 -- 06/08/2019
 
     - Regular node package updates.
     - Removed yarn.lock
+
+Version 1.1.5 -- 07/27/2019
+
+    - Regular node package updates.
