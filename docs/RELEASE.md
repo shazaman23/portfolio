@@ -65,3 +65,7 @@ Version 1.1.7 -- 02/29/2020
 
     - Regular node package updates.
     - Merged in a pull request from composer to eliminate vulnerabilities.
+
+Version 1.1.8 -- 04/11/2020
+
+    - Regular node package updates.
