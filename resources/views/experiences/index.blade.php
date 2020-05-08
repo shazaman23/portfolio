@@ -36,7 +36,7 @@
     <!-- <div class=""> -->
       <p>{{ $experience->problem }}</p>
       <p>{{ $experience->description }}</p>
-      <p>{{ $experience->demoText }} <a href="{{ $experience->url }}">Check it out!!</a></p>
+      <p>{{ $experience->demoText }} @if( $experience->brand == "Benegov" ) (site no longer running) @else<a href="{{ $experience->url }}">Check it out!!</a>@endif</p>
     </div>
 
   </div>
