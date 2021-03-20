@@ -22,7 +22,7 @@
     "node-macaddress": "^0.2.4",
     "snyk": "^1.319.2",
     "sshpk": "^1.16.1",
-    "ssri": "^6.0.1",
+    "ssri": "^8.0.1",
     "url-parse": "^1.4.7",
     "vue": "^2.6.11",
     "yargs-parser": "^18.1.3"
