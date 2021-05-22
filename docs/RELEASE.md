@@ -73,3 +73,7 @@ Version 1.1.8 -- 04/11/2020
 Version 1.1.9 -- 05/07/2020
 
     - Regular node package updates.
+
+Version 1.1.10 -- 05/22/2021
+
+    - Regular node package updates.
