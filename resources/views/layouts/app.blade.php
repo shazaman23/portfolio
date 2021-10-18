@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -20,7 +20,7 @@
         <link rel="stylesheet" href="/css/app.css">
 
     </head>
-    <body>
+    <body class="antialiased">
 
         <div id="app" class="flex-center position-ref full-height">
 
@@ -36,11 +36,11 @@
             @endif
 
             @if (Session::has('status'))
-              <div class="alert alert-success flash-alert" v-bind:class="{ 'hide-alert': timeout }">
+              <div class="alert alert-success flash-alert" :class="{ 'hide-alert': timeout }">
                   <p>{{ Session::get('status') }}</p>
               </div>
             @elseif (Session::has('emailError'))
-              <div class="alert alert-danger flash-alert" v-bind:class="{ 'hide-alert': timeout }">
+              <div class="alert alert-danger flash-alert" :class="{ 'hide-alert': timeout }">
                 <p>There was an error sending the email. Please try again later.</p>
               </div>
             @endif

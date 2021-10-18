@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -11,8 +13,8 @@
 |
 */
 
-Route::get('/', 'SiteController@home');
+Route::get('/', [App\Http\Controllers\HomeController::class, 'home']);
 
-Route::post('/send', 'SiteController@sendMail');
+Route::post('/send', [App\Http\Controllers\HomeController::class, 'sendMail']);
 
-Route::get('/experience/{id}', 'SiteController@experienceIndex');
+Route::get('/experience/{id}', [App\Http\Controllers\HomeController::class, 'experienceIndex']);

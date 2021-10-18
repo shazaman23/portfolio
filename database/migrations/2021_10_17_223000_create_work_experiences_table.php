@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateWorkExperiencesTable extends Migration
 {
@@ -14,7 +14,7 @@ class CreateWorkExperiencesTable extends Migration
     public function up()
     {
         Schema::create('work_experiences', function (Blueprint $table) {
-            $table->increments('id');
+            $table->id();
             $table->string('brand');
             $table->string('title');
             $table->text('problem');
