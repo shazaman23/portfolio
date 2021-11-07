@@ -1,11 +1,7 @@
-- Why are some of the fonts showing up differently?
-    - Title in hero
-- Why are some of the bootstrap styles not loading across properly? 
-    - Do I need to update my version of bootstrap that I'm using?
-    - Submit button on email form
-- Need to download database settings and import them to local test site
 - Check the prod env values to make sure local fields are not missed.
 - Need to make adjustments so that the site can deploy to AWS using the ECS stuff
 - Need to take another look at how to set up snyk
 - Need to redesign the controller work to use more API approach for pulling data from database.
 - Need to restructure vue to use more components without dumping everything in one monolith component.
+- Make some slack integrations
+- Switch to S3 access for images
