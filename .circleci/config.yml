@@ -90,9 +90,6 @@ jobs:
           name: Upload logs artifacts
           path: ./storage/logs
       - store_artifacts:
-          name: Upload test screenshot artifacts
-          path: ./tests/Browser/screenshots
-      - store_artifacts:
           name: Upload test artifacts
           path: ./tests/phpunit/results.xml
       - store_test_results:
