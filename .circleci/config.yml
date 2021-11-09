@@ -55,9 +55,9 @@ jobs:
       - image: circleci/mysql:5.7.31
         environment:
           MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-          MYSQL_DATABASE: 'portfolio'
-          MYSQL_USER: sail
-          MYSQL_PASSWORD: password
+          MYSQL_DATABASE: "$DB_DATABASE"
+          MYSQL_USER: "$DB_USER"
+          MYSQL_PASSWORD: "$DB_PASSWORD"
     steps:
       - attach_workspace:
           at: ./
