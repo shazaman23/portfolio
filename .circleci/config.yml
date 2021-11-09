@@ -1,63 +1,100 @@
-# PHP CircleCI 2.0 configuration file
-# See: https://circleci.com/docs/2.0/language-php/
-version: 2
+version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   build:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      # Specify the version you desire here
-      - image: circleci/php:7.1-node-browsers
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # Using the RAM variation mitigates I/O contention
-      # for database intensive operations.
-      # - image: circleci/mysql:5.7-ram
-      #
-      # - image: redis:2.8.19
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+      - image: cimg/php:8.0-node
     steps:
       - checkout
-
-      - run: sudo apt update # PHP CircleCI 2.0 Configuration File# PHP CircleCI 2.0 Configuration File sudo apt install zlib1g-dev libsqlite3-dev
-      - run: sudo docker-php-ext-install zip
-
-      # Download and cache dependencies
       - restore_cache:
           keys:
-            # "composer.lock" can be used if it is committed to the repo
-            - v1-dependencies-{{ checksum "composer.json" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      - run: composer install -n --prefer-dist
-
+            - php-dependencies-{{ checksum "composer.json" }}
+            - php-dependencies-
+      - run:
+          name: composer install -n --prefer-dist
+          command: |
+            sed -ie "s|__APP_ENV__|$APP_ENV|g" .env.pipelines
+            sed -ie "s|__APP_KEY__||g" .env.pipelines
+            sed -ie "s|__APP_URL__|$APP_URL|g" .env.pipelines
+            sed -ie "s|__DB_HOST__|$DB_HOST|g" .env.pipelines
+            sed -ie "s|__DB_DATABASE__|$DB_DATABASE|g" .env.pipelines
+            sed -ie "s|__DB_USERNAME__|$DB_USERNAME|g" .env.pipelines
+            sed -ie "s|__DB_PASSWORD__|$DB_PASSWORD|g" .env.pipelines
+            sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env.pipelines
+            sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env.pipelines
+            sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env.pipelines
+            cp .env.pipelines .env
+            composer install --no-interaction --p
       - save_cache:
-          key: v1-dependencies-{{ checksum "composer.json" }}
+          key: php-dependencies-{{ checksum "composer.json" }}
           paths:
             - ./vendor
       - restore_cache:
           keys:
-            - node-v1-{{ checksum "package.json" }}
-            - node-v1-
-      - run: yarn install
+            - node-dependencies-{{ checksum "package.json" }}
+            - node-dependencies-
+      - run:
+          name: npm install
+          command: npm install
       - save_cache:
-          key: node-v1-{{ checksum "package.json" }}
+          key: node-dependencies-{{ checksum "package.json" }}
           paths:
-            - node_modules
+            - ./node_modules
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
+  
+  phpunit:
+    docker:
+      - image: cimg/php:8.0-node
+      - image: circleci/mysql:5.7.31
+        environment:
+          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_DATABASE: 'homestead'
+          MYSQL_USER: $DB_USERNAME
+          MYSQL_PASSWORD: $DB_PASSWORD
+    steps:
+      - attach_workspace:
+          at: ./
+      - run:
+          name: npm run prod
+          command: npm run prod
+      - run: # Primary container is not MySQL so we need to wait till it's running and ready
+          name: Sleep for MySQL
+          command: |
+            for i in `seq 1 20`
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 5
+            done
+            echo "Timeout waiting for connection to MySQL" && exit 1
+      - run:
+          name: Initialize Database and Environment
+          command: |
+            php artisan key:generate
+            php artisan migrate:fresh --seed
+            php artisan config:cache
+            php artisan serve &
+            sleep 5
+      - run:
+          name: Run Tests
+          command: |
+            ./vendor/bin/phpunit --colors --testdox
+      - store_artifacts:
+          path: ./storage/logs
+      - store_artifacts:
+          path: ./tests/Browser/screenshots
+      - store_artifacts:
+          path: ./tests/phpunit/results.xml
+      - store_test_results:
+          path: ./tests
 
-      # prepare the database
-      - run: touch storage/testing.sqlite
-      - run: php artisan migrate --env=testing --database=sqlite_testing --force
-
-      # run tests with phpunit or codecept
-      - run: ./vendor/bin/phpunit
-      # - run: ./vendor/bin/codecept build
-      # - run: ./vendor/bin/codecept run
+workflows:
+  deploy:
+    jobs:
+      - build
+      - phpunit:
+          requires:
+            - build
