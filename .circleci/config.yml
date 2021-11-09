@@ -11,7 +11,7 @@ jobs:
             - php-dependencies-{{ checksum "composer.json" }}
             - php-dependencies-
       - run:
-          name: composer install -n --prefer-dist
+          name: composer install --no-interaction --prefer-dist
           command: |
             sed -ie "s|__APP_ENV__|$APP_ENV|g" .env.pipelines
             sed -ie "s|__APP_KEY__||g" .env.pipelines
@@ -24,7 +24,7 @@ jobs:
             sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env.pipelines
             sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env.pipelines
             cp .env.pipelines .env
-            composer install --no-interaction --p
+            composer install --no-interaction --prefer-dist
       - save_cache:
           key: php-dependencies-{{ checksum "composer.json" }}
           paths:
