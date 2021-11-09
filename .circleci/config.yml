@@ -17,7 +17,7 @@ jobs:
             cp .env.pipelines .env
             sed -ie "s|__APP_ENV__|testing|g" .env
             sed -ie "s|__APP_KEY__||g" .env
-            sed -ie "s|__APP_URL__|http://127.0.0.1:8000|g" .env
+            sed -ie "s|__APP_URL__|http://localhost:8000|g" .env
             sed -ie "s|__DB_DATABASE__|portfolio|g" .env
             sed -ie "s|__DB_HOST__|127.0.0.1|g" .env
             sed -ie "s|__DB_PASSWORD__|password|g" .env
@@ -54,9 +54,9 @@ jobs:
       - image: cimg/php:8.0-node
       - image: circleci/mysql:5.7.31
         environment:
-          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_RANDOM_ROOT_PASSWORD: yes
           MYSQL_DATABASE: portfolio
-          MYSQL_USERNAME: sail
+          MYSQL_USER: sail
           MYSQL_PASSWORD: password
     steps:
       - attach_workspace:
