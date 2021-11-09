@@ -57,7 +57,7 @@ jobs:
       - image: cimg/php:8.0-node
       - image: circleci/mysql:5.7.31
         environment:
-          MYSQL_RANDOM_ROOT_PASSWORD: yes
+          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
           MYSQL_DATABASE: portfolio
           MYSQL_USER: sail
           MYSQL_PASSWORD: password
@@ -103,15 +103,14 @@ jobs:
       - image: cimg/php:8.0-node
     steps:
       - aws-ecr/build-and-push-image:
-          account-url: 412430435138.dkr.ecr.us-west-2.amazonaws.com
+          account-url: ECR_URL
           attach-workspace: true
-          aws-access-key-id: $ECR_ACCESS_KEY
-          aws-secret-access-key: $ECR_SECRET_KEY
+          aws-access-key-id: ECR_ACCESS_KEY
+          aws-secret-access-key: ECR_SECRET_KEY
           checkout: false
-          context: .
           dockerfile: docker-config/Dockerfile
           no-output-timeout: 5m
-          region: us-west-2
+          region: ECR_REGION
           repo: portfolio
           tag: 'temp'
 
