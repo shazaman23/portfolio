@@ -5,3 +5,6 @@
 - Need to restructure vue to use more components without dumping everything in one monolith component.
 - Make some slack integrations
 - Switch to S3 access for images
+- Add a database seeder
+- Add unit tests
+- Switch to Vue with a store for state
