@@ -15,13 +15,13 @@ jobs:
           name: Install vendor packages
           command: |
             cp .env.pipelines .env
-            sed -ie "s|__APP_ENV__|$APP_ENV|g" .env
+            sed -ie "s|__APP_ENV__|testing|g" .env
             sed -ie "s|__APP_KEY__||g" .env
-            sed -ie "s|__APP_URL__|$APP_URL|g" .env
-            sed -ie "s|__DB_DATABASE__|$MYSQL_DATABASE|g" .env
+            sed -ie "s|__APP_URL__|http://127.0.0.1:8000|g" .env
+            sed -ie "s|__DB_DATABASE__|portfolio|g" .env
             sed -ie "s|__DB_HOST__|127.0.0.1|g" .env
-            sed -ie "s|__DB_PASSWORD__|$MYSQL_PASSWORD|g" .env
-            sed -ie "s|__DB_USERNAME__|$MYSQL_USER|g" .env
+            sed -ie "s|__DB_PASSWORD__|password|g" .env
+            sed -ie "s|__DB_USERNAME__|sail|g" .env
             sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
             sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
             sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
