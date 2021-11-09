@@ -54,7 +54,10 @@ jobs:
       - image: cimg/php:8.0-node
       - image: circleci/mysql:5.7.31
         environment:
-          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_RANDOM_ROOT_PASSWORD: yes
+          MYSQL_DATABASE: portfolio
+          MYSQL_USERNAME: sail
+          MYSQL_PASSWORD: password
     steps:
       - attach_workspace:
           at: ./
