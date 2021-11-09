@@ -14,17 +14,17 @@ jobs:
       - run:
           name: Install vendor packages
           command: |
-            sed -ie "s|__APP_ENV__|$APP_ENV|g" .env.pipelines
-            sed -ie "s|__APP_KEY__||g" .env.pipelines
-            sed -ie "s|__APP_URL__|$APP_URL|g" .env.pipelines
-            sed -ie "s|__DB_DATABASE__|$DB_DATABASE|g" .env.pipelines
-            sed -ie "s|__DB_HOST__|$DB_HOST|g" .env.pipelines
-            sed -ie "s|__DB_PASSWORD__|$DB_PASSWORD|g" .env.pipelines
-            sed -ie "s|__DB_USERNAME__|$DB_USERNAME|g" .env.pipelines
-            sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env.pipelines
-            sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env.pipelines
-            sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env.pipelines
             cp .env.pipelines .env
+            sed -ie "s|__APP_ENV__|testing|g" .env
+            sed -ie "s|__APP_KEY__||g" .env
+            sed -ie "s|__APP_URL__|http://localhost:8000|g" .env
+            sed -ie "s|__DB_DATABASE__|homestead|g" .env
+            sed -ie "s|__DB_HOST__|127.0.0.1|g" .env
+            sed -ie "s|__DB_PASSWORD__|password|g" .env
+            sed -ie "s|__DB_USERNAME__|sail|g" .env
+            sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
+            sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
+            sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
             composer install --no-interaction --prefer-dist
       - save_cache:
           name: Save vendor cache
@@ -56,8 +56,8 @@ jobs:
         environment:
           MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
           MYSQL_DATABASE: 'homestead'
-          MYSQL_USER: $DB_USERNAME
-          MYSQL_PASSWORD: $DB_PASSWORD
+          MYSQL_USER: sail
+          MYSQL_PASSWORD: password
     steps:
       - attach_workspace:
           at: ./
