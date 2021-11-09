@@ -85,7 +85,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            ./vendor/bin/phpunit --colors --testdox
+            ./vendor/bin/phpunit --colors --testdox --log-junit ./tests/phpunit/results.xml
       - store_artifacts:
           name: Upload logs artifacts
           path: ./storage/logs
