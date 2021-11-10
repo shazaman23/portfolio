@@ -120,6 +120,6 @@ workflows:
       - phpunit:
           requires:
             - build
-      - aws-deploy:
+      - aws-deploy-temp:
           requires:
             - phpunit
