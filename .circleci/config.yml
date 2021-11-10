@@ -123,5 +123,4 @@ workflows:
             - build
       - aws-deploy:
           requires:
-            - build
             - phpunit
