@@ -123,7 +123,6 @@ jobs:
             sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
             sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
             sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
-            npm run prod
       - aws-ecr/build-and-push-image:
           account-url: ECR_URL
           attach-workspace: false
