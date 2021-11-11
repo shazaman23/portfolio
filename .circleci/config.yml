@@ -104,6 +104,12 @@ jobs:
       - attach_workspace:
           at: ./
       - run:
+          name: Update custom PMA image
+          command: |
+            docker build -t $DH_USERNAME/killfood-pma:latest -f docker-config/pma/pma.Dockerfile .
+            echo $DH_PASSWORD | docker login -u $DH_USERNAME --password-stdin
+            docker push $DH_USERNAME/killfood-pma:latest    
+      - run:
           name: Set prod env values
           command: |
             cp .env.pipelines .env
@@ -113,11 +119,10 @@ jobs:
             sed -ie "s|__DB_DATABASE__|$prod_db_database|g" .env
             sed -ie "s|__DB_HOST__|$prod_db_host|g" .env
             sed -ie "s|__DB_PASSWORD__|$prod_db_password|g" .env
-            sed -ie "s|__DB_USERNAME__|$prod_db_username|g" .env
+            sed -ie "s|__DB_USERNAME__|$prod_db/.docker/config.json_username|g" .env
             sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
             sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
             sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
-            npm run production
       - aws-ecr/build-and-push-image:
           account-url: ECR_URL
           attach-workspace: true
