@@ -101,6 +101,8 @@ jobs:
   aws-deploy:
     machine: true
     steps:
+      - attach_workspace:
+          at: ./
       - run:
           name: Set prod env values
           command: |
