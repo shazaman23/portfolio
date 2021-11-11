@@ -101,6 +101,21 @@ jobs:
   aws-deploy-temp:
     machine: true
     steps:
+      - run:
+          name: Set prod env values
+          command: |
+            cp .env.pipelines .env
+            sed -ie "s|__APP_ENV__|$prod_app_env|g" .env
+            sed -ie "s|__APP_KEY__|$prod_app_key|g" .env
+            sed -ie "s|__APP_URL__|$prod_app_url|g" .env
+            sed -ie "s|__DB_DATABASE__|$prod_db_database|g" .env
+            sed -ie "s|__DB_HOST__|$prod_db_host|g" .env
+            sed -ie "s|__DB_PASSWORD__|$prod_db_password|g" .env
+            sed -ie "s|__DB_USERNAME__|$prod_db_username|g" .env
+            sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
+            sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
+            sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
+            npm run production
       - aws-ecr/build-and-push-image:
           account-url: ECR_URL
           attach-workspace: true
@@ -111,7 +126,6 @@ jobs:
           no-output-timeout: 5m
           region: ECR_REGION
           repo: portfolio
-          tag: 'temp'
 
 workflows:
   deploy:
@@ -120,6 +134,6 @@ workflows:
       - phpunit:
           requires:
             - build
-      - aws-deploy-temp:
+      - aws-deploy:
           requires:
             - phpunit
