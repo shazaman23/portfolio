@@ -9,13 +9,8 @@ WORKDIR /var/www/portfolio
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Copy Composer files
-COPY --from=composer /usr/bin/composer /usr/bin/composer
-COPY composer.json /var/www/portfolio
 COPY docker-config/php/local.ini /usr/local/etc/php/conf.d/local.ini
 COPY docker-config/php/fpm/pool.conf /usr/local/etc/php-fpm.d/pool.conf
-COPY .env /var/www/portfolio/.env
-COPY public/mix-manifest.json /var/www/portfolio/public/mix-manifest.json
 
 # Copy app to web root
 COPY . /var/www/portfolio
@@ -70,17 +65,6 @@ RUN apt-get update && apt-get install -y \
 
 # Change current user to www
 USER www
-
-# Install and configure node/npm
-
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash \
-    && . ~/.nvm/nvm.sh \
-    && nvm --version \
-    && nvm install 16 \
-    && export NVM_DIR="$HOME/.nvm" \
-    && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
-    && node --version && npm --version && npm install \
-    && npm run prod
 
 VOLUME ["/var/www/portfolio"]
 
