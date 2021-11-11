@@ -98,7 +98,7 @@ jobs:
       - store_test_results:
           path: ./tests
     
-  aws-deploy-temp:
+  aws-deploy:
     machine: true
     steps:
       - run:
