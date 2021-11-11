@@ -16,7 +16,7 @@ COPY docker-config/php/fpm/pool.conf /usr/local/etc/php-fpm.d/pool.conf
 COPY . /var/www/portfolio
 
 # Install Dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get -qq update && apt-get -qq install -y \
         build-essential \
         ca-certificates curl \
         git gnupg gosu \
@@ -52,7 +52,7 @@ RUN apt-get update && apt-get install -y \
         ldap \
         pdo_mysql \
         soap \
-        zip \
+        zip > /dev/null \
     # Add group/user www
     && groupadd -g 1000 www \
     && useradd -u 1000 -ms /bin/bash -g www www \
