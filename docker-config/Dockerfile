@@ -53,8 +53,6 @@ RUN apt-get update && apt-get install -y \
         pdo_mysql \
         soap \
         zip \
-    # Install Composer
-    && composer install \
     # Add group/user www
     && groupadd -g 1000 www \
     && useradd -u 1000 -ms /bin/bash -g www www \
