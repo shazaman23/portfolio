@@ -2,19 +2,15 @@
 
 namespace App\Mail;
 
-
 use Illuminate\Http\Request;
-
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class ViewerContact extends Mailable
 {
     use Queueable, SerializesModels;
-
-    private $request;
 
     /**
      * Create a new message instance.
@@ -23,7 +19,7 @@ class ViewerContact extends Mailable
      */
     public function __construct(Request $request)
     {
-      $this->request = $request;
+        $this->request = $request;
     }
 
     /**

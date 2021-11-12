@@ -1,0 +1,8 @@
+- Need to take another look at how to set up snyk
+- Need to redesign the controller work to use more API approach for pulling data from database.
+- Need to restructure vue to use more components without dumping everything in one monolith component.
+- Make some slack integrations
+- Switch to S3 access for images
+- Add a database seeder
+- Add unit tests
+- Switch to Vue with a store for state

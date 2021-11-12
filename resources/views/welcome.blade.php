@@ -10,7 +10,7 @@
     <div class="home-banner">
       <div class="title">
         <h1 class="display-3 text-left"><strong>Jake <br>Killpack</strong></h1>
-        <h5 class="text-muted text-left">Web Developer</h5>
+        <h5 class="text-muted text-left">Software Engineer</h5>
       </div>
     </div>
 
@@ -304,7 +304,7 @@
 
         {{ csrf_field() }}
 
-        <button type="submit" class="btn btn-default">Send Message</button>
+        <button type="submit" class="btn btn-info">Send Message</button>
 
       </form>
       <!-- END EMAIL FORM -->

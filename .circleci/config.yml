@@ -1,0 +1,146 @@
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@7.2.0
+
+jobs:
+  build:
+    docker:
+      - image: cimg/php:8.0-node
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore vendor cache
+          keys:
+            - php-dependencies-{{ checksum "composer.json" }}
+            - php-dependencies-
+      - run:
+          name: Install vendor packages
+          command: |
+            cp .env.pipelines .env
+            sed -ie "s|__APP_ENV__|testing|g" .env
+            sed -ie "s|__APP_KEY__||g" .env
+            sed -ie "s|__APP_URL__|http://localhost:8000|g" .env
+            sed -ie "s|__DB_DATABASE__|portfolio|g" .env
+            sed -ie "s|__DB_HOST__|127.0.0.1|g" .env
+            sed -ie "s|__DB_PASSWORD__|password|g" .env
+            sed -ie "s|__DB_USERNAME__|sail|g" .env
+            sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
+            sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
+            sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
+            composer install --no-interaction --prefer-dist
+      - save_cache:
+          name: Save vendor cache
+          key: php-dependencies-{{ checksum "composer.json" }}
+          paths:
+            - ./vendor
+      - restore_cache:
+          name: Restore node cache
+          keys:
+            - node-dependencies-{{ checksum "package.json" }}
+            - node-dependencies-
+      - run:
+          name: Install node packages
+          command: npm install
+      - save_cache:
+          name: Save node cache
+          key: node-dependencies-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
+  
+  phpunit:
+    docker:
+      - image: cimg/php:8.0-node
+      - image: circleci/mysql:5.7.31
+        environment:
+          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_DATABASE: portfolio
+          MYSQL_USER: sail
+          MYSQL_PASSWORD: password
+    steps:
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Prepare production assets
+          command: npm run prod
+      - run: # Primary container is not MySQL so we need to wait till it's running and ready
+          name: Sleep for MySQL
+          command: |
+            for i in `seq 1 20`
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 5
+            done
+            echo "Timeout waiting for connection to MySQL" && exit 1
+      - run:
+          name: Initialize database and environment
+          command: |
+            php artisan key:generate
+            php artisan migrate:fresh --seed
+            php artisan config:cache
+            php artisan serve &
+            sleep 5
+      - run:
+          name: Run tests
+          command: |
+            ./vendor/bin/phpunit --colors --testdox --log-junit ./tests/phpunit/results.xml
+      - store_artifacts:
+          name: Upload logs artifacts
+          path: ./storage/logs
+      - store_artifacts:
+          name: Upload test artifacts
+          path: ./tests/phpunit/results.xml
+      - store_test_results:
+          path: ./tests
+    
+  aws-deploy:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Update custom PMA image
+          command: |
+            docker build -t $DH_USERNAME/killfood-pma:latest -f docker-config/pma/pma.Dockerfile .
+            echo $DH_PASSWORD | docker login -u $DH_USERNAME --password-stdin
+            docker push $DH_USERNAME/killfood-pma:latest    
+      - run:
+          name: Set prod env values
+          command: |
+            cp .env.pipelines .env
+            sed -ie "s|__APP_ENV__|$prod_app_env|g" .env
+            sed -ie "s|__APP_KEY__|$prod_app_key|g" .env
+            sed -ie "s|__APP_URL__|$prod_app_url|g" .env
+            sed -ie "s|__DB_DATABASE__|$prod_db_database|g" .env
+            sed -ie "s|__DB_HOST__|$prod_db_host|g" .env
+            sed -ie "s|__DB_PASSWORD__|$prod_db_password|g" .env
+            sed -ie "s|__DB_USERNAME__|$prod_db_username|g" .env
+            sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
+            sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
+            sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
+      - aws-ecr/build-and-push-image:
+          account-url: ECR_URL
+          attach-workspace: false
+          aws-access-key-id: ECR_ACCESS_KEY
+          aws-secret-access-key: ECR_SECRET_KEY
+          checkout: false
+          dockerfile: docker-config/Dockerfile
+          no-output-timeout: 5m
+          region: ECR_REGION
+          repo: portfolio
+
+workflows:
+  deploy:
+    jobs:
+      - build
+      - phpunit:
+          requires:
+            - build
+      - aws-deploy:
+          requires:
+            - phpunit
