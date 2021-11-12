@@ -1,7 +1,8 @@
-Version 2.0.0 -- ???
+Version 2.0.0 -- 11/12/2021
 
     - Update to latest version of Laravel (8.*)
     - Update to containerized deployment strategy
+    - Update version of Bootstrap used for styles
 
 Version 1.1.10 -- 05/22/2021
 

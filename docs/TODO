@@ -1,5 +1,3 @@
-- Check the prod env values to make sure local fields are not missed.
-- Need to make adjustments so that the site can deploy to AWS using the ECS stuff
 - Need to take another look at how to set up snyk
 - Need to redesign the controller work to use more API approach for pulling data from database.
 - Need to restructure vue to use more components without dumping everything in one monolith component.
