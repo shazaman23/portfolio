@@ -147,5 +147,8 @@ workflows:
           requires:
             - build
       - aws-deploy:
+          filters:
+            branches:
+              only: master
           requires:
             - phpunit
