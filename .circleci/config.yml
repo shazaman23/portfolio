@@ -1,7 +1,8 @@
 version: 2.1
 
 orbs:
-  aws-ecr: circleci/aws-ecr@7.2.0
+  aws-cli: circleci/aws-cli@2.0.0
+  aws-ecr: circleci/aws-ecr@7.3.0
 
 jobs:
   build:
@@ -98,6 +99,8 @@ jobs:
       - store_test_results:
           path: ./tests
     
+  # Docker image builds need to be optimized somehow... 
+    # Look into https://circleci.com/docs/2.0/docker-layer-caching/ and consider breaking up the PMA Image build and the custom image build into separate, parallel jobs.
   aws-deploy:
     machine: true
     steps:
@@ -123,6 +126,8 @@ jobs:
             sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
             sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
             sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
+      - aws-cli/setup:
+          override-installed: true
       - aws-ecr/build-and-push-image:
           account-url: ECR_URL
           attach-workspace: false
