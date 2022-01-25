@@ -10464,7 +10464,8 @@ hr {
   color: #ffffff;
 }
 .showcase .main-title {
-  margin: 1em;
+  padding: 1em;
+  margin: 0;
 }
 .showcase .features {
   background: #555555;
@@ -10588,6 +10589,9 @@ hr {
   .showcase .display.cellphone {
     margin-left: -5em;
   }
+}
+.footer h4 {
+  margin-top: 20px;
 }
 .footer .contact-info {
   flex-direction: row;
