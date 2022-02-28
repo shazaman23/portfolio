@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-  aws-cli: circleci/aws-cli@2.0.0
-  aws-ecr: circleci/aws-ecr@7.3.0
+  aws-cli: cimg/aws-cli@2.0.0
+  aws-ecr: cimg/aws-ecr@7.3.0
 
 jobs:
   build:
@@ -56,7 +56,7 @@ jobs:
   phpunit:
     docker:
       - image: cimg/php:8.0-node
-      - image: circleci/mysql:5.7.31
+      - image: cimg/mysql:5.7.31
         environment:
           MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
           MYSQL_DATABASE: portfolio
