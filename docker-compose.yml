@@ -46,6 +46,8 @@ services:
             retries: 3
             timeout: 5s
     phpmyadmin:
+        depends_on:
+        - mysql
         image: phpmyadmin/phpmyadmin
         restart: always
         ports:
@@ -54,9 +56,6 @@ services:
             PMA_HOST: mysql
         networks:
             - sail
-        depends_on:
-            - mysql
-
     redis:
         image: 'redis:alpine'
         ports:
