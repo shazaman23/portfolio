@@ -35,19 +35,32 @@ jobs:
           key: php-dependencies-{{ checksum "composer.json" }}
           paths:
             - ./vendor
+      # - restore_cache:
+      #     name: Restore node cache
+      #     keys:
+      #       - node-dependencies-{{ checksum "package.json" }}
+      #       - node-dependencies-
+      # - run:
+      #     name: Install node packages
+      #     command: npm install
+      # - save_cache:
+      #     name: Save node cache
+      #     key: node-dependencies-{{ checksum "package.json" }}
+      #     paths:
+      #       - ./node_modules
       - restore_cache:
-          name: Restore node cache
+          name: Restore Yarn Package Cache
           keys:
-            - node-dependencies-{{ checksum "package.json" }}
-            - node-dependencies-
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
-          name: Install node packages
-          command: npm install
+          name: Install Dependencies
+          command: yarn install --immutable
       - save_cache:
-          name: Save node cache
-          key: node-dependencies-{{ checksum "package.json" }}
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
           paths:
-            - ./node_modules
+            - .yarn/cache
+            - .yarn/unplugged
       - persist_to_workspace:
           root: ./
           paths:
