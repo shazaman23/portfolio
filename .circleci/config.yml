@@ -7,7 +7,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/php:8.0-node
+      - image: cimg/php:8.1-node
     steps:
       - checkout
       - restore_cache:
@@ -55,7 +55,7 @@ jobs:
   
   phpunit:
     docker:
-      - image: cimg/php:8.0-node
+      - image: cimg/php:8.1-node
       - image: cimg/mysql:5.7.36
         environment:
           MYSQL_RANDOM_ROOT_PASSWORD: 'yes'

@@ -1,68 +1,68 @@
-FROM php:8.0-fpm
+FROM php:8.1.3-fpm
 
 SHELL [ "/bin/bash", "-l", "-c" ]
 
 # Set Working Directory
 WORKDIR /var/www/portfolio
 
-# Set timezone
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
+# Copy Composer files
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+COPY composer.json /var/www/portfolio
 COPY docker-config/php/local.ini /usr/local/etc/php/conf.d/local.ini
 COPY docker-config/php/fpm/pool.conf /usr/local/etc/php-fpm.d/pool.conf
 
 # Copy app to web root
 COPY . /var/www/portfolio
 
-# Install Dependencies
-RUN apt-get -qq update && apt-get -qq install -y \
-        build-essential \
-        ca-certificates curl \
-        git gnupg gosu \
-        jpegoptim \
-        libc-client2007e-dev libcap2-bin libcurl4-openssl-dev \
-        libfreetype6-dev libjpeg62-turbo-dev libldb-dev libldap-2.4-2 libldap2-dev \
-        libkrb5-dev libonig-dev libpng-dev libpng-dev libxml2-dev libzip-dev \
-        mariadb-client-10.5 \
-        nodejs npm \
-        optipng \
-        python2 \
-        supervisor \
+# Install Dependencies, clean cache, install php extensions, composer install, 
+#    set www user privileges, install xdebug
+RUN apt update && apt install -y \
+        curl \
+        default-mysql-client \
+        git \
+        libonig-dev \
+        libpng-dev \
+        libxml2-dev \
+        libzip-dev \
+        nodejs \
+        npm \
         unzip \
         vim \
         zip \
-    # Clear apt Cache
-    && apt-get -y autoremove \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    # Configure gnupg and ipv6
-    && mkdir -p ~/.gnupg \
-    && chmod 600 ~/.gnupg \
-    && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf \
-    && apt-key adv --homedir ~/.gnupg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E5267A6C \
-    && apt-key adv --homedir ~/.gnupg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C300EE8C \
-    # Install PHP Extensions
-    && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu hirsute main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
-    && apt-get update \
+    && apt upgrade -y && apt clean && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install \
         bcmath \
+        calendar \
+        ctype \
+        dba \
         exif \
         gd \
-        intl \
-        ldap \
+        gettext \
+        iconv \
+        mbstring \
+        mysqli \
+        pcntl \
         pdo_mysql \
+        shmop \
         soap \
+        sockets \
+        xml \
         zip > /dev/null \
-    # Add group/user www
+    && composer install \
     && groupadd -g 1000 www \
     && useradd -u 1000 -ms /bin/bash -g www www \
-    # Update ownership of working directory
     && chown -R www:www /var/www/portfolio \
-    # Set permissions for docker-entrypoint
-    && chmod 755 /var/www/portfolio/docker-config/docker-entrypoint.sh
+    && chmod 755 /var/www/portfolio/docker-config/docker-entrypoint.sh \
+    && pecl install xdebug && docker-php-ext-enable xdebug
 
 # Change current user to www
 USER www
+
+# Install and configure node/npm
+RUN curl -o- -L https://yarnpkg.com/install.sh | bash \
+    && export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH" \
+    && yarn -v \
+    && yarn
 
 VOLUME ["/var/www/portfolio"]
 
