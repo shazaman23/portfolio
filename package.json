@@ -27,6 +27,7 @@
         "vue-template-compiler": "^2.6.12"
     },
     "resolutions": {
-        "autoprefixer": "10.4.5"
+        "autoprefixer": "10.4.5",
+        "terser": "^5.14.2"
     }
 }
