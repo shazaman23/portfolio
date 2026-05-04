@@ -22,3 +22,8 @@ docker-compose.yml
 *.swp
 xdebug.so
 /.idea
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/terraform.tfvars

@@ -1,0 +1,19 @@
+# Dependencies (rebuilt inside the image via composer install / yarn)
+vendor
+node_modules
+
+# Version control
+.git
+
+# Infrastructure and CI (not needed in the app image)
+terraform
+.circleci
+
+# Documentation and tests
+docs
+tests
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
