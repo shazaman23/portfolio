@@ -1,36 +1,58 @@
 {
     "private": true,
     "scripts": {
-        "dev": "npm run development",
-        "development": "mix",
+        "dev": "mix",
         "watch": "mix watch",
         "watch-poll": "mix watch -- --watch-options-poll=1000",
         "hot": "mix watch --hot",
-        "prod": "npm run production",
-        "production": "mix --production",
-        "test": "snyk test"
+        "prod": "mix --production",
+        "snyk-test": "snyk test"
+    },
+    "pnpm": {
+        "overrides": {
+            "@babel/traverse": "^7.23.2",
+            "body-parser": "^1.20.3",
+            "braces": "^3.0.3",
+            "browserify-sign": "^4.2.2",
+            "cipher-base": "^1.0.5",
+            "cross-spawn": "^7.0.5",
+            "decode-uri-component": "^0.2.1",
+            "elliptic": "^6.6.1",
+            "http-proxy-middleware": "^2.0.7",
+            "immutable": "^4.3.8",
+            "json5@<1.0.2": "1.0.2",
+            "json5@>=2.0.0 <2.2.2": "^2.2.2",
+            "loader-utils@<1.4.2": "1.4.2",
+            "loader-utils@>=2.0.0 <2.0.3": "2.0.4",
+            "minimatch": "^3.1.3",
+            "node-forge": "^1.4.0",
+            "path-to-regexp": "^0.1.13",
+            "pbkdf2": "^3.1.3",
+            "picomatch": "^2.3.2",
+            "semver": "^7.5.2",
+            "serialize-javascript": "^7.0.3",
+            "sha.js": "^2.4.12",
+            "svgo": "^2.8.1",
+            "terser": "^5.14.2",
+            "webpack": ">=5.76.0 <5.103.0",
+            "webpack-dev-middleware": "^5.3.4",
+            "ws": "^8.17.1"
+        }
     },
     "devDependencies": {
-        "axios": "^0.21",
+        "axios": "^1.8.4",
         "bootstrap": "^4.6.0",
         "jquery": "^3.6",
         "laravel-mix": "^6.0.6",
-        "lodash": "^4.17.19",
+        "lodash": "^4.17.21",
         "popper.js": "^1.16.1",
         "postcss": "^8.1.14",
         "resolve-url-loader": "^3.1.2",
         "sass": "^1.32.11",
         "sass-loader": "^11.0.1",
-        "snyk": "^1.737.0",
+        "snyk": "^1.1295.0",
         "vue": "^2.6.12",
         "vue-loader": "^15.9.8",
         "vue-template-compiler": "^2.6.12"
-    },
-    "resolutions": {
-        "autoprefixer": "10.4.5",
-        "terser": "^5.14.2"
-    },
-    "dependencies": {
-        "terser": "^5.14.2"
     }
 }

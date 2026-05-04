@@ -7,13 +7,13 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/php:8.1-node
+      - image: cimg/php:8.2-node
     steps:
       - checkout
       - restore_cache:
           name: Restore vendor cache
           keys:
-            - php-dependencies-{{ checksum "composer.json" }}
+            - php-dependencies-{{ checksum "composer.lock" }}
             - php-dependencies-
       - run:
           name: Install vendor packages
@@ -32,46 +32,34 @@ jobs:
             composer install --no-interaction --prefer-dist
       - save_cache:
           name: Save vendor cache
-          key: php-dependencies-{{ checksum "composer.json" }}
+          key: php-dependencies-{{ checksum "composer.lock" }}
           paths:
             - ./vendor
-      # - restore_cache:
-      #     name: Restore node cache
-      #     keys:
-      #       - node-dependencies-{{ checksum "package.json" }}
-      #       - node-dependencies-
-      # - run:
-      #     name: Install node packages
-      #     command: npm install
-      # - save_cache:
-      #     name: Save node cache
-      #     key: node-dependencies-{{ checksum "package.json" }}
-      #     paths:
-      #       - ./node_modules
       - restore_cache:
-          name: Restore Yarn Package Cache
+          name: Restore pnpm Package Cache
           keys:
-            - yarn-packages-{{ checksum "yarn.lock" }}
+            - pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
       - run:
           name: Install Dependencies
-          command: yarn install --immutable
+          command: |
+            sudo npm install -g pnpm
+            pnpm install --frozen-lockfile
       - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
+          name: Save pnpm Package Cache
+          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
           paths:
-            - .yarn/cache
-            - .yarn/unplugged
+            - node_modules
       - persist_to_workspace:
           root: ./
           paths:
             - ./
-  
+
   phpunit:
     docker:
-      - image: cimg/php:8.1-node
-      - image: cimg/mysql:5.7.36
+      - image: cimg/php:8.2-node
+      - image: cimg/mysql:8.0
         environment:
-          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_RANDOM_ROOT_PASSWORD: "yes"
           MYSQL_DATABASE: portfolio
           MYSQL_USER: sail
           MYSQL_PASSWORD: password
@@ -79,8 +67,11 @@ jobs:
       - attach_workspace:
           at: ./
       - run:
+          name: Install pnpm
+          command: sudo npm install -g pnpm
+      - run:
           name: Prepare production assets
-          command: npm run prod
+          command: pnpm run prod
       - run: # Primary container is not MySQL so we need to wait till it's running and ready
           name: Sleep for MySQL
           command: |
@@ -111,20 +102,15 @@ jobs:
           path: ./tests/phpunit/results.xml
       - store_test_results:
           path: ./tests
-    
-  # Docker image builds need to be optimized somehow... 
-    # Look into https://circleci.com/docs/2.0/docker-layer-caching/ and consider breaking up the PMA Image build and the custom image build into separate, parallel jobs.
+
   aws-deploy:
-    machine: true
+    machine:
+      image: ubuntu-2204:current
+    environment:
+      DOCKER_BUILDKIT: "1"
     steps:
       - attach_workspace:
           at: ./
-      - run:
-          name: Update custom PMA image
-          command: |
-            docker build -t $DH_USERNAME/killfood-pma:latest -f docker-config/pma/pma.Dockerfile .
-            echo $DH_PASSWORD | docker login -u $DH_USERNAME --password-stdin
-            docker push $DH_USERNAME/killfood-pma:latest    
       - run:
           name: Set prod env values
           command: |
@@ -139,8 +125,14 @@ jobs:
             sed -ie "s|__MAILGUN_DOMAIN__|$MAILGUN_DOMAIN|g" .env
             sed -ie "s|__MAILGUN_SECRET__|$MAILGUN_SECRET|g" .env
             sed -ie "s|__MAIL_FROM_ADDRESS__|$MAIL_FROM_ADDRESS|g" .env
-      - aws-cli/setup:
-          override-installed: true
+      - aws-ecr/ecr-login:
+          account-url: ECR_URL
+          aws-access-key-id: ECR_ACCESS_KEY
+          aws-secret-access-key: ECR_SECRET_KEY
+          region: ECR_REGION
+      - run:
+          name: Pull previous image for layer cache
+          command: docker pull $ECR_URL/portfolio:latest || true
       - aws-ecr/build-and-push-image:
           account-url: ECR_URL
           attach-workspace: false
@@ -148,6 +140,7 @@ jobs:
           aws-secret-access-key: ECR_SECRET_KEY
           checkout: false
           dockerfile: docker-config/Dockerfile
+          extra-build-args: "--cache-from $ECR_URL/portfolio:latest --build-arg BUILDKIT_INLINE_CACHE=1"
           no-output-timeout: 5m
           region: ECR_REGION
           repo: portfolio
