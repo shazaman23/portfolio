@@ -19,7 +19,6 @@
 
 locals {
   site_bucket_arn       = "arn:aws:s3:::${local.site_bucket_name}"
-  assets_bucket_arn     = "arn:aws:s3:::${local.assets_bucket_name}"
   api_function_arn      = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${local.api_function_name}"
   api_log_group_arn     = "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${local.api_function_name}"
   experiences_table_arn = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${local.experiences_table_name}"
@@ -224,7 +223,7 @@ resource "aws_iam_role_policy" "assets_publisher" {
           "s3:GetObject",
           "s3:DeleteObject"
         ]
-        Resource = ["${local.assets_bucket_arn}/*"]
+        Resource = ["${aws_s3_bucket.assets.arn}/*"]
       },
       {
         Sid    = "AssetsBucketList"
@@ -233,7 +232,7 @@ resource "aws_iam_role_policy" "assets_publisher" {
           "s3:ListBucket",
           "s3:GetBucketLocation"
         ]
-        Resource = [local.assets_bucket_arn]
+        Resource = [aws_s3_bucket.assets.arn]
       },
       {
         Sid    = "InvalidateAssets"

@@ -27,3 +27,6 @@ xdebug.so
 **/.terraform/
 terraform/**/*.tfstate*
 terraform/**/terraform.tfvars
+
+# Site media working copy (lives in the jakekillpack-assets-<env> buckets; see assets-tool in ~/bin)
+/assets/

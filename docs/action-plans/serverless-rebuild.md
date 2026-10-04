@@ -188,30 +188,35 @@ Split assets by who references them:
 
 - **Code assets:** anything the SCSS or components reference (`main-banner-bg-2.png`, the computer/iPad/phone frames, the Flaticon font, the favicon; about 100 KB). These live in `web/src/assets`, Vite fingerprints them, and each deploy uploads them to that environment's site bucket. Compiled output is never committed again.
 - **Unused, not carried over:** `main-banner-bg.png` and `public/fonts/vendor/bootstrap-sass/` (glyphicons). Nothing references them.
-- **Media:** anything content references (About Me photos, desktop and mobile screenshots; about 2.5 MB). These live only in the `jakekillpack-assets-<env>` buckets, served at `/assets/*`. They're converted to WebP on the way in, because image bytes are what use up CloudFront's allowance (see [Limits](#limits-rate-limiting-and-alerts)).
+- **Media:** anything content references (About Me photos, desktop and mobile screenshots). These live only in the `jakekillpack-assets-<env>` buckets, served at `/assets/*`. They're converted to WebP on the way in, because image bytes are what use up CloudFront's allowance (see [Limits](#limits-rate-limiting-and-alerts)). The conversion in Phase 1 took the 14 files from 2.5 MB to 0.96 MB.
 
 Bucket setup (`modules/site/s3.tf`, killfood's bucket conventions):
 
 - Private, with all four public-access blocks, `BucketOwnerEnforced`, and SSE-S3. The environment's CloudFront OAC is the only reader.
-- Versioning on, so an overwrite or delete can be undone, plus a lifecycle rule that expires noncurrent versions after 90 days.
+- Versioning on, so an overwrite or delete can be undone, plus a lifecycle rule that expires noncurrent versions after 90 days and aborts incomplete multipart uploads after 7.
 - `prevent_destroy`.
 
-Key layout:
+Key layout (each key matches its URL path):
 
 ```
-img/about/family-cabin.webp            (also betrayal-game-slim, studying, popcorn, jetski-day)
-img/screenshots/desktop/<name>.webp    (uk2-dropdown, uk2-dont-forget, uk2-bulk-search, uk2-disclaimers, benegov-site)
-img/screenshots/mobile/<name>.webp
+assets/img/about/<name>.webp                 (family-cabin, betrayal-game-slim, studying, popcorn, jetski-day)
+assets/img/screenshots/desktop/<name>.webp   (uk2-dropdown, uk2-dont-forget, uk2-bulk-search, uk2-disclaimers, benegov-site)
+assets/img/screenshots/mobile/<name>.webp    (the same, minus uk2-dont-forget, which has no mobile view)
 ```
+
+- **Why keys start with `assets/`:** CloudFront forwards the whole request path to the origin, and an origin path can add a prefix but can't remove one. So `/assets/img/about/popcorn.webp` reads the key `assets/img/about/popcorn.webp`, with no rewrite function needed.
+- **Vite must not build into `/assets/`:** that's its default output folder for JS and CSS, and CloudFront would route those requests to the media bucket. Phase 4 sets `build.assetsDir: 'static'`.
 
 Experience records store just the file name (`"screenshot": "uk2-dropdown.webp"`), and the frontend builds `/assets/img/screenshots/{desktop,mobile}/<name>`.
 
 Workflow:
 
-- `assets/` at the repo root is the gitignored working copy.
-- `scripts/assets.sh push|pull|ls qa|prod` wraps `aws s3 sync` using the `portfolio-assets-qa` or `portfolio-assets-prod` CLI profile. Push to QA, check it on `qa.jakekillpack.com`, then push to production. It never passes `--delete`; versioning covers mistakes anyway.
+- `assets/` at the repo root is the gitignored working copy. It mirrors the bucket's `assets/` prefix, so `assets/img/about/popcorn.webp` is served at `/assets/img/about/popcorn.webp`.
+- Two personal tools in `~/bin` do the work. They aren't in this repo, because other projects (UFF, killfood) can use them too; `--help` on each has the details.
+- `to-webp [-w width] [-o dir] <image>...` converts new images. It encodes each one both lossy (quality 85) and lossless and keeps the smaller file. Lossy won for the photos and the busier screenshots; lossless won for flat UI. It drops EXIF data, such as phone GPS, and never scales up. The About Me photos display at 300 CSS pixels tall or less, so `-w 1200` is plenty for a large photo. `cwebp` runs in a local Docker image, built on first use, so there's nothing to install.
+- `assets-tool push|pull|ls portfolio qa|prod [path...]` wraps `aws s3 sync` using the `portfolio-assets-qa` or `portfolio-assets-prod` CLI profile. Optional paths limit it to particular files or folders. Each must be inside `assets/`, and the tool won't run until that folder exists, so it can't sync the wrong files. `--dryrun` previews a change. Push to QA, check it on `qa.jakekillpack.com`, then push to production. It never deletes on either side; versioning covers mistakes anyway.
 - Media is uploaded with `Cache-Control: public, max-age=86400`. To change an image, prefer a new file name. Overwriting an existing name needs `aws cloudfront create-invalidation`; the first 1,000 paths each month are free.
-- Local dev: the LocalStack init hook uploads `assets/` into the local bucket. A new machine fills the folder with `scripts/assets.sh pull prod`.
+- Local dev: the LocalStack init hook uploads `assets/` into the local bucket under the same `assets/` prefix. A new machine fills the folder with `mkdir assets && assets-tool pull portfolio prod`.
 - Git history: leave it alone. Rewriting a public repo's history isn't worth about 20 MB. The media leaves `public/` at cutover.
 
 ## Terraform
@@ -258,7 +263,7 @@ terraform/
 | `global/iam.tf` | GitHub OIDC provider | 0 |
 | `global/monitoring.tf` | SNS topic `portfolio-alerts`, its Slack channel configuration and notifications-only role, and an AWS Budget filtered to `Project=portfolio` (see [Where Alerts Go](#where-alerts-go)) | 0 |
 | `modules/site/iam.tf` | The environment's three roles: today's `terraform/iam.tf`, with names suffixed by environment and trust moved to GitHub Environments | 0 |
-| `modules/site/s3.tf` | Site and assets buckets, encryption, versioning, lifecycle, public-access blocks, OAC-only bucket policies | 1–2 |
+| `modules/site/s3.tf` | Site and assets buckets, encryption, versioning, lifecycle, public-access blocks, OAC-only bucket policies (✅ assets bucket, 2026-10-04) | 1–2 |
 | `modules/site/acm.tf` | Certificate in us-east-1 for the environment's hostnames, DNS-validated | 2 |
 | `modules/site/cloudfront.tf` | Distribution, two OACs, three behaviors, cache policies, response headers policy (`noindex` on QA), CloudFront Function | 2 |
 | `modules/site/dns.tf` | Alias records (behind an on/off input) and certificate validation records, in the global zone | 2 |
@@ -369,7 +374,7 @@ Three layers keep bot traffic from becoming a bill.
 - **No overage charges:** CloudFront, WAF, and the attached Route 53 zone cost $0/month whatever the traffic or attack. The allowance is 1M requests and 100 GB a month.
 - **Built-in "approaching" alerts:** AWS emails the account at 50%, 80%, and 100% of the allowance.
 - **Going over:** still no charge. The first spike up to 3× the allowance is absorbed that month. Sustained excess over 2–3 months gets slower delivery (fewer or more distant edge locations) until you upgrade. Pro is $15/month for 10M requests and 50 TB.
-- **In page views:** at today's ~3 MB per uncached page, 100 GB is about 33,000 first visits a month, and 1M requests is about 50,000 at ~20 requests each. WebP (Phase 1) and lazy-loading the About Me photos (Phase 4) should roughly triple the bandwidth headroom. Returning visitors cost far less, because fingerprinted assets and images stay in the browser cache. A steady 1M views a month would mean upgrading to Pro or Business, and the 50% and 80% emails arrive long before that.
+- **In page views:** at today's ~3 MB per uncached page, 100 GB is about 33,000 first visits a month, and 1M requests is about 50,000 at ~20 requests each. WebP (Phase 1, which cut the media from 2.5 MB to 0.96 MB) and lazy-loading the About Me photos (Phase 4) should roughly triple the bandwidth headroom. Returning visitors cost far less, because fingerprinted assets and images stay in the browser cache. A steady 1M views a month would mean upgrading to Pro or Business, and the 50% and 80% emails arrive long before that.
 - **Per-IP rate limit (WAF, included):** start at 300 requests per 5 minutes per IP and tune once real traffic is visible. A full uncached page view is about 20 requests, so a real visitor never gets near it. Requests WAF blocks don't count against the allowance. DDoS protection and bot management are also included.
 
 QA gets the same protection if AWS accepts a second Free plan on the same domain (an account can have three). That matters more now that QA is public; its hostname is discoverable through certificate transparency logs. If AWS won't accept it, QA's CloudFront stays on pay-as-you-go with no WAF. QA traffic should still fit easily inside the always-free 1 TB and 10M requests, its API has the same origin caps as production, and the cost budget is the backstop.
@@ -574,14 +579,23 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - ✅ 2026-10-04: applied `envs/qa`, then `envs/prod`, creating 6 resources each: the three roles and their policies.
    - ✅ 2026-10-04: you added the two `portfolio-assets-*` CLI profiles; both assume their roles.
 6. ✅ 2026-10-04: **GitHub Environments created** (verified through GitHub's API): `production` allows deployments only from `master`; `qa` has no branch restriction.
-7. **Set up the branch.** Create a `rebuild` branch with `web/`, `api/`, `content/`, `scripts/`, `docker/`, and a gitignored `assets/` next to `terraform/`. Laravel stays at the root as the parity reference until cutover.
+7. ✅ 2026-10-04: **Set up the branch.** Created `rebuild` off the Phase 0 branch. Git doesn't track empty folders, so each of `web/`, `api/`, `content/`, `scripts/`, `docker/`, and the gitignored `assets/` is added in the phase that first fills it (`assets/` in Phase 1). Laravel stays at the root as the parity reference until cutover.
 8. **Clean up the old database** (you'll do this when ready). Check killfood's MySQL for the old portfolio database and user (they shared the container). Export them for reference, then drop both.
 
 ### Phase 1: Assets to S3
 
-1. Add the assets bucket to `modules/site/s3.tf`; apply QA, then production.
-2. Copy the media from `public/img` into `assets/` using the new layout, converting to WebP. Write `scripts/assets.sh`, push to QA, then to production.
-3. Verify with `AWS_PROFILE=killfood-ro aws s3 ls s3://jakekillpack-assets-qa/ --recursive` (and `-prod`).
+1. ✅ 2026-10-04: **Added the assets bucket** to `modules/site/s3.tf`, and applied QA, then production (6 resources each).
+   - The assets-publisher policy now references the bucket resource instead of a name-built ARN. The policy content didn't change.
+   - Checked with `killfood-ro`: all four public-access blocks, `BucketOwnerEnforced`, SSE-S3, versioning, the lifecycle rule, and the `Project` and `Environment` tags. There's no bucket policy until Phase 2 adds the OAC one. Re-plans show no changes.
+2. ✅ 2026-10-04: **Converted and uploaded the media.**
+   - Converted the 14 files into `assets/` using the new layout. `family-cabin` and `studying` were scaled from 2048 to 1200 px wide.
+   - Pushed them to QA, then to production.
+   - The conversion and sync scripts then became the general-purpose `to-webp` and `assets-tool` in `~/bin`. `to-webp` reproduces all 14 files byte for byte, and `assets-tool` reports both buckets in sync.
+   - Every object has `Content-Type: image/webp`, `Cache-Control: public, max-age=86400`, SSE, and a version ID.
+   - A second push uploads nothing.
+   - `pull qa` into an empty folder restored all 14 files byte for byte.
+   - The QA publisher role is denied listing the production bucket.
+3. ✅ 2026-10-04: **Verified with `killfood-ro`:** `aws s3 ls --recursive` shows 14 objects (961.9 KiB) in each of `jakekillpack-assets-qa` and `jakekillpack-assets-prod`.
 
 ### Phase 2: Certificate, CDN, DNS
 
@@ -621,7 +635,7 @@ Each phase builds QA first, checks it, then applies the same change to productio
 
 ### Phase 4: React Frontend
 
-1. Scaffold `web/` (Vite, React, TypeScript, React Router). Port the SCSS partials, Bootstrap 4.6, the Flaticon font, and Font Awesome 5. Drop the duplicate Bootstrap 4.0.0-beta.2 CDN stylesheet; the parity check in step 5 will show whether any of its rules were visible.
+1. Scaffold `web/` (Vite, React, TypeScript, React Router). Set `build.assetsDir: 'static'` so built JS and CSS don't land under `/assets/`, which CloudFront routes to the media bucket. Port the SCSS partials, Bootstrap 4.6, the Flaticon font, and Font Awesome 5. Drop the duplicate Bootstrap 4.0.0-beta.2 CDN stylesheet; the parity check in step 5 will show whether any of its rules were visible.
 2. Port the behaviors from the Vue instance in `resources/js/app.js`:
    - About Me strips (one open at a time)
    - screenshot rotation every 5 seconds
