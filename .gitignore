@@ -23,7 +23,7 @@ docker-compose.yml
 xdebug.so
 /.idea
 
-# Terraform
-terraform/.terraform/
-terraform/*.tfstate*
-terraform/terraform.tfvars
+# Terraform (every root: global, envs/qa, envs/prod)
+**/.terraform/
+terraform/**/*.tfstate*
+terraform/**/terraform.tfvars
