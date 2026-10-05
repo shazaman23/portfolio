@@ -12,3 +12,23 @@ output "assets_publisher_role_arn" {
   description = "ARN of the assets publisher role (role_arn for the portfolio-assets-<env> CLI profile)"
   value       = aws_iam_role.assets_publisher.arn
 }
+
+output "site_bucket_name" {
+  description = "Bucket the deploy workflow uploads the React build to"
+  value       = aws_s3_bucket.site.bucket
+}
+
+output "assets_bucket_name" {
+  description = "Bucket assets-tool syncs media with"
+  value       = aws_s3_bucket.assets.bucket
+}
+
+output "distribution_id" {
+  description = "CloudFront distribution ID (for invalidations)"
+  value       = aws_cloudfront_distribution.site.id
+}
+
+output "distribution_domain_name" {
+  description = "CloudFront domain name; serves the site before the alias records exist"
+  value       = aws_cloudfront_distribution.site.domain_name
+}

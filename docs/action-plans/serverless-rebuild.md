@@ -253,6 +253,11 @@ terraform/
 - `ignore_changes` wherever something else owns a value:
   - the Lambda's code, which CI deploys (the same way killfood's ECS service ignores `task_definition` so CodePipeline can own it)
   - the production distribution's `web_acl_id`, which the flat-rate plan owns
+- **The distribution stays within what the flat-rate Free plan allows** (checked against the CloudFront docs 2026-10-04), so production can subscribe:
+  - **AWS-managed cache, origin-request, and response-headers policies only.** Custom ones need the Business plan. So QA's `noindex` header comes from a CloudFront Function instead of a custom headers policy.
+  - **At most 5 cache behaviors.**
+  - **No legacy `forwarded_values` settings.**
+  - **Functions and web ACLs used by this distribution alone.** Each environment has its own functions.
 - Terraform 1.16 warns that the `dynamodb_table` backend argument is deprecated in favor of `use_lockfile = true`. It's kept here to match killfood; switch both at once later.
 
 ### Files
@@ -265,7 +270,8 @@ terraform/
 | `modules/site/iam.tf` | The environment's three roles: today's `terraform/iam.tf`, with names suffixed by environment and trust moved to GitHub Environments | 0 |
 | `modules/site/s3.tf` | Site and assets buckets, encryption, versioning, lifecycle, public-access blocks, OAC-only bucket policies (✅ assets bucket, 2026-10-04) | 1–2 |
 | `modules/site/acm.tf` | Certificate in us-east-1 for the environment's hostnames, DNS-validated | 2 |
-| `modules/site/cloudfront.tf` | Distribution, two OACs, three behaviors, cache policies, response headers policy (`noindex` on QA), CloudFront Function | 2 |
+| `modules/site/cloudfront.tf` | Distribution, one OAC shared by both buckets, the behaviors (default and `/assets/*`; `/api/*` in Phase 3), AWS-managed cache and security-headers policies, and two CloudFront Functions from `functions/`: a viewer-request function (www redirect, client-side routes, QA's `robots.txt`) and, on QA only, a viewer-response function that adds `X-Robots-Tag` | 2 |
+| `modules/site/functions/` | The functions' JavaScript, plus `functions.test.mjs` (run with `docker run --rm -v "$PWD/terraform/modules/site/functions:/f:ro" -w /f node:22-alpine node --test`) | 2 |
 | `modules/site/dns.tf` | Alias records (behind an on/off input) and certificate validation records, in the global zone | 2 |
 | `modules/site/dynamodb.tf` | The environment's table (on-demand) | 3 |
 | `modules/site/lambda.tf` | Function with reserved concurrency, 30-day log group, placeholder zip with `ignore_changes` on code | 3 |
@@ -281,7 +287,7 @@ The production stack can be built before launch with its alias records switched 
 | Resource | Reason |
 |----------|--------|
 | Secret values in Parameter Store (`/portfolio/<env>/<service>/<name>`) | If Terraform managed the parameters, refreshes would copy the decrypted values into state. Each is created once with the CLI (see [Secrets](#secrets)), the same way killfood's `production.env` lives in S3 outside Terraform. Terraform only grants read access, through each environment's `api_secret_parameters`. |
-| CloudFront flat-rate plan subscription, attaching the zone to it, and the plan's WAF rate-limit setting | Managed in the CloudFront console (or the PricingPlanManager CLI). The plan attaches its own WAF web ACL, so Terraform ignores the distribution's `web_acl_id`. A subscribed distribution can't be deleted until the plan is cancelled. |
+| CloudFront flat-rate plan subscription, attaching the zone to it, and the plan's WAF rate-limit setting | Managed in the CloudFront console, which creates the plan's WAF web ACL for you. (`aws pricing-plan-manager create-subscription` also works, but it needs exactly one existing web ACL passed in alongside the distribution.) Terraform ignores the distribution's `web_acl_id`. A subscribed distribution can't be deleted until the plan is cancelled; a Free plan cancels immediately. |
 | GitHub Environments `qa` and `production` and their branch rules | Repository settings |
 | Mailgun account, domain, sending keys, and the `contact@` route | These live in Mailgun's dashboard. A Mailgun Terraform provider exists, but it would need an API key in Terraform. Only the DNS records are managed here. |
 
@@ -307,8 +313,8 @@ Also:
 - **Pull requests** get no AWS access at all.
 - **OIDC provider** for `token.actions.githubusercontent.com`, in `global/`. The account has none today.
 - **Slack alerts role** `portfolio-chatbot-alerts`, in `global/`. The Slack integration assumes it, and it can only read CloudWatch (see [Where Alerts Go](#where-alerts-go)).
-- **Read-only access** reuses the account-wide `killfood-readonly` role (`killfood-ro`), which already covers everything here. It already denies S3 object reads and SSM parameter reads, so state, media contents, and the Mailgun keys stay out of inspection sessions.
-- **Interim scope:** the CloudFront statements use `distribution/*` until Phase 2 creates the distributions. The account has no other distributions. Phase 2 narrows each to its own distribution's ARN.
+- **Read-only access** reuses the account-wide `killfood-readonly` role (`killfood-ro`). It already denies S3 object reads and SSM parameter reads, so state, media contents, and the Mailgun keys stay out of inspection sessions. One gap: AWS's `ReadOnlyAccess` doesn't cover the newer PricingPlanManager service yet, so `killfood-ro` can't list plan subscriptions (`pricingplanmanager:ListSubscriptions` is denied). Adding `pricingplanmanager:Get*` and `List*` would be a change to killfood's Terraform.
+- **CloudFront scope:** narrowed in Phase 2 (2026-10-04). Each role's CloudFront statements name only its own distribution. Checked: the QA publisher can invalidate QA's distribution and is denied on production's.
 
 CLI profiles to add to `~/.aws/config` after apply:
 
@@ -599,15 +605,42 @@ Each phase builds QA first, checks it, then applies the same change to productio
 
 ### Phase 2: Certificate, CDN, DNS
 
-1. Add the certificate, distribution, site bucket, CloudFront Function, response headers policy, and DNS records to the module.
-2. Apply QA (`qa.jakekillpack.com`, `noindex`). Check it with a placeholder `index.html`:
-   - `/` and `/experience/1` return the placeholder, and `/assets/img/about/popcorn.webp` returns the image.
-   - Every response carries `X-Robots-Tag: noindex`, and `/robots.txt` disallows all crawling.
-   - Direct S3 URLs return 403.
-3. Try subscribing the QA distribution to a second Free plan. If AWS won't accept a second plan on the same domain, QA stays on pay-as-you-go.
-4. Apply production with its alias records off; the site doesn't go live until Phase 6.
-5. Subscribe the production distribution to the flat-rate Free plan, attach the Route 53 zone to the plan, and set the WAF per-IP limit to 300 requests per 5 minutes.
-6. Narrow each environment's CloudFront IAM statements from `distribution/*` to its own distribution's ARN.
+1. ✅ 2026-10-04: **Added to the module:** the site bucket, the certificate, the distribution, the CloudFront Functions, and the DNS records.
+   - The Free plan allows only AWS-managed cache and headers policies (see [Conventions](#conventions-kept-from-killfood)). So the distribution uses `Managed-CachingOptimized` and `Managed-SecurityHeadersPolicy`, and QA's `noindex` header comes from a viewer-response function.
+   - Both buckets share one OAC. Their policies allow only their own environment's distribution, and they include `s3:ListBucket` so a missing file returns 404 instead of 403.
+   - The function tests (13) pass in Node. The deployed functions also gave the right results in CloudFront's own runtime (`aws cloudfront test-function`).
+2. ✅ 2026-10-04: **Applied QA** (17 added). Distribution `E3GE43H7XZORDY` serves `qa.jakekillpack.com`, with a placeholder `index.html` uploaded. All 18 checks passed:
+   - DNS A and AAAA records exist.
+   - `/` and `/experience/1` return the placeholder, and `/assets/img/about/popcorn.webp` returns `image/webp` with its `Cache-Control`.
+   - HSTS (without `includeSubDomains`), `nosniff`, and `X-Frame-Options` are present. HTTP redirects to HTTPS.
+   - Missing files return 404.
+   - `X-Robots-Tag: noindex, nofollow` is on every successful response. CloudFront Functions don't run on origin 4xx/5xx responses, which aren't indexed anyway. `/robots.txt` disallows all crawling.
+   - Direct S3 URLs return 403. The certificate is Amazon-issued for the hostname.
+3. **Subscribe QA to a second Free plan** (optional; see step 5 for the console path).
+   - If AWS won't accept a second plan under the same apex, QA stays on pay-as-you-go. That's still about $0, because the always-free tier covers 1 TB and 10M requests, but there's no WAF.
+   - A Free plan uses one of the account's three slots, and the limit can't be raised. A Free plan cancels immediately, so a slot can be freed later if killfood needs one.
+4. ✅ 2026-10-04: **Applied production** (15 added), with its alias records off.
+   - Distribution `E1CXGUELSCL11M` (`d248ehj2knjkmm.cloudfront.net`) serves `jakekillpack.com` and `www`.
+   - Checked through the distribution's IP with the real hostnames, since there are no DNS records yet. All 14 checks passed, with no `X-Robots-Tag`.
+   - `https://www.jakekillpack.com/experience/1?utm_source=test` returns 301 to the apex with the path and query intact.
+   - The zone gained only the certificate validation records; the Mailgun records are unchanged. `jakekillpack.com` still doesn't resolve.
+5. ✅ 2026-10-04: **Subscribed production to the flat-rate Free plan** (you, in the console).
+   - **Subscription:** created web ACL `CreatedByCloudFront-37de771b` (us-east-1, CloudFront scope) and attached it to `E1CXGUELSCL11M`.
+   - **Hosted zone:** the plan's **Manage plan** section shows the `jakekillpack.com` zone already attached.
+   - **Don't use "Route domains to CloudFront":** it creates the apex and `www` alias records outside Terraform. That would put the site live early and make the Phase 6 apply fail on records that already exist.
+   - **Rate limit:** you added `Burst-Rate-Limit` in the WAF console: 300 requests per 5 minutes per source IP, action Block, priority 0, with CloudWatch metrics and request sampling on.
+     - The CloudFront console's own **Rate limiting** option only appears once the distribution has a non-S3 origin. Leave it off when the API origin arrives in Phase 3, or there will be two rate rules.
+   - **Managed rule sets:** the console added three, all in Count (log-only) mode at priorities 1–3:
+     - `AmazonIpReputationList`
+     - `CommonRuleSet`
+     - `KnownBadInputsRuleSet`
+   - **Rule count:** that's 4 of the Free plan's 5 WAF rules.
+   - **Checked with `killfood-ro`** after these changes:
+     - `global` and `envs/prod` re-plan with no changes; `ignore_changes = [web_acl_id]` covers the web ACL.
+     - Production still passes all 14 edge checks.
+   - **Still to do:** switch the managed rule sets from Count to Block once the contact form has been tested (Phase 3 step 8).
+6. ✅ 2026-10-04: **Narrowed each environment's CloudFront IAM statements** to its own distribution, in the same applies (see [IAM Roles](#iam-roles)).
+7. ✅ 2026-10-04: **Re-plans** of `global`, `envs/qa`, and `envs/prod` show no changes.
 
 ### Phase 3: Local Stack and API
 
@@ -628,10 +661,12 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - Create two domain sending keys scoped to `jakekillpack.com`, one per environment.
    - Store them with the [add-a-secret command](#adding-a-secret) as `/portfolio/qa/mailgun/api-key` and `/portfolio/prod/mailgun/api-key`.
    - Don't revoke the old account key yet; see Resolved, Mailgun.
-7. **CloudFront `/api/*` behavior:**
-   - origin request policy `AllViewerExceptHostHeader`
-   - a cache policy with a 300-second TTL that ignores query strings (only GET and HEAD are cached, so POSTs pass through)
+7. **CloudFront `/api/*` behavior** (managed policies only, to stay within the Free plan):
+   - origin request policy `Managed-AllViewerExceptHostHeader`
+   - cache policy `Managed-CachingOptimized`, which keys on the path only. The API sets `Cache-Control: public, max-age=300` on the experience GETs. Only GET and HEAD are cached, so POSTs pass through.
+   - on QA, the same `noindex` viewer-response function as the other behaviors
 8. **Contact flow, end to end:** on QA, check that the email arrives with `[QA]` in the subject, lands in the inbox rather than spam, and shows `dkim=pass` for `jakekillpack.com` (Mailgun signs with the existing `krs._domainkey` record). Check that the 26th send of the day returns 429. Then repeat on production.
+9. **Switch production's WAF managed rule sets from Count to Block.** First check their sampled requests and CloudWatch metrics for matches on legitimate contact-form posts; `CommonRuleSet`'s body-size rule is the usual false positive. Switch them in the CloudFront console (**Security** tab → **Enable blocking**) or the WAF console (turn off each rule set's "Override rule group action to Count").
 
 ### Phase 4: React Frontend
 

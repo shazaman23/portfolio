@@ -8,17 +8,17 @@
 #   - portfolio-assets-publisher-<env>  assumed from the admin CLI profile to
 #                                       upload images via `portfolio-assets-<env>`
 #
-# The resources these roles act on (buckets, table, function, distribution)
-# are created in later phases of docs/action-plans/serverless-rebuild.md.
-# Until then their ARNs are built from the names in locals.tf; when each
-# resource lands in this module, swap the local for the resource attribute.
+# The buckets and distribution are in this module, so their policies use the
+# resource ARNs. The table and function arrive in Phase 3 of
+# docs/action-plans/serverless-rebuild.md; until then their ARNs are built
+# from the names in locals.tf. When each lands, swap the local for the
+# resource attribute.
 #
 # Inspection uses the existing account-wide `killfood-readonly` role
 # (`killfood-ro` CLI profile), so no portfolio read-only role is defined.
 # =============================================================================
 
 locals {
-  site_bucket_arn       = "arn:aws:s3:::${local.site_bucket_name}"
   api_function_arn      = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${local.api_function_name}"
   api_log_group_arn     = "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${local.api_function_name}"
   experiences_table_arn = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${local.experiences_table_name}"
@@ -29,11 +29,6 @@ locals {
     for name in var.api_secret_parameters :
     "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter${local.ssm_parameter_prefix}/${name}"
   ]
-
-  # No distribution exists yet, so its ID is unknown. The account has no
-  # CloudFront distributions; replace with this environment's distribution
-  # ARN in the phase that creates it.
-  cloudfront_distributions_arn = "arn:aws:cloudfront::${var.aws_account_id}:distribution/*"
 }
 
 # -----------------------------------------------------------------------------
@@ -145,13 +140,13 @@ resource "aws_iam_role_policy" "github_deploy" {
           "s3:PutObject",
           "s3:DeleteObject"
         ]
-        Resource = ["${local.site_bucket_arn}/*"]
+        Resource = ["${aws_s3_bucket.site.arn}/*"]
       },
       {
         Sid      = "SiteBucketList"
         Effect   = "Allow"
         Action   = ["s3:ListBucket"]
-        Resource = [local.site_bucket_arn]
+        Resource = [aws_s3_bucket.site.arn]
       },
       {
         Sid    = "UpdateApiCode"
@@ -179,7 +174,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "cloudfront:CreateInvalidation",
           "cloudfront:GetInvalidation"
         ]
-        Resource = [local.cloudfront_distributions_arn]
+        Resource = [aws_cloudfront_distribution.site.arn]
       }
     ]
   })
@@ -241,7 +236,7 @@ resource "aws_iam_role_policy" "assets_publisher" {
           "cloudfront:CreateInvalidation",
           "cloudfront:GetInvalidation"
         ]
-        Resource = [local.cloudfront_distributions_arn]
+        Resource = [aws_cloudfront_distribution.site.arn]
       }
     ]
   })

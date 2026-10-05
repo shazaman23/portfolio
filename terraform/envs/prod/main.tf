@@ -17,16 +17,30 @@ terraform {
   }
 }
 
+locals {
+  tags = {
+    Project     = "portfolio"
+    ManagedBy   = "terraform"
+    Environment = "production"
+    Purpose     = "portfolio-site"
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 
   default_tags {
-    tags = {
-      Project     = "portfolio"
-      ManagedBy   = "terraform"
-      Environment = "production"
-      Purpose     = "portfolio-site"
-    }
+    tags = local.tags
+  }
+}
+
+# CloudFront only accepts ACM certificates from us-east-1.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = local.tags
   }
 }
 
@@ -35,8 +49,17 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+data "aws_route53_zone" "main" {
+  name = "jakekillpack.com"
+}
+
 module "site" {
   source = "../../modules/site"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 
   environment    = "prod"
   aws_region     = var.aws_region
@@ -47,4 +70,9 @@ module "site" {
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
   api_secret_parameters = ["mailgun/api-key"]
+
+  hostnames            = ["jakekillpack.com", "www.jakekillpack.com"]
+  route53_zone_id      = data.aws_route53_zone.main.zone_id
+  create_alias_records = false # true at cutover (Phase 6): this is what makes the site live
+  noindex              = false
 }

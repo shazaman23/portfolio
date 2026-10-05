@@ -46,3 +46,29 @@ variable "api_secret_parameters" {
     error_message = "Use <service>/<name>, e.g. mailgun/api-key."
   }
 }
+
+# ---- Edge (CloudFront, certificate, DNS) ----
+variable "hostnames" {
+  description = "Hostnames the distribution serves. The first is the canonical one; a www. hostname redirects to the same name without www."
+  type        = list(string)
+
+  validation {
+    condition     = length(var.hostnames) > 0
+    error_message = "List at least one hostname."
+  }
+}
+
+variable "route53_zone_id" {
+  description = "ID of the jakekillpack.com hosted zone (managed in terraform/global)"
+  type        = string
+}
+
+variable "create_alias_records" {
+  description = "Point the hostnames at the distribution. Off for production until cutover; turning it on is what makes the site live."
+  type        = bool
+}
+
+variable "noindex" {
+  description = "Keep search engines out: add X-Robots-Tag: noindex to every response and serve a robots.txt that disallows all crawling"
+  type        = bool
+}
