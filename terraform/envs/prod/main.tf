@@ -4,7 +4,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.0"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.0"
     }
   }
 
@@ -69,10 +73,12 @@ module "site" {
   github_environment       = "production"
   github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
 
-  api_secret_parameters = ["mailgun/api-key"]
+  api_secret_parameters = ["mailgun/sending-key"]
 
   hostnames            = ["jakekillpack.com", "www.jakekillpack.com"]
   route53_zone_id      = data.aws_route53_zone.main.zone_id
   create_alias_records = false # true at cutover (Phase 6): this is what makes the site live
   noindex              = false
+
+  contact_recipient = var.contact_recipient
 }

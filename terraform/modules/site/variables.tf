@@ -43,7 +43,7 @@ variable "api_secret_parameters" {
 
   validation {
     condition     = alltrue([for name in var.api_secret_parameters : can(regex("^[a-z0-9-]+/[a-z0-9-]+$", name))])
-    error_message = "Use <service>/<name>, e.g. mailgun/api-key."
+    error_message = "Use <service>/<name>, e.g. mailgun/sending-key."
   }
 }
 
@@ -71,4 +71,22 @@ variable "create_alias_records" {
 variable "noindex" {
   description = "Keep search engines out: add X-Robots-Tag: noindex to every response and serve a robots.txt that disallows all crawling"
   type        = bool
+}
+
+# ---- API ----
+variable "contact_recipient" {
+  description = "Inbox that receives contact-form messages (set in the gitignored terraform.tfvars)"
+  type        = string
+}
+
+variable "mail_subject_prefix" {
+  description = "Prefix on contact email subjects, e.g. \"[QA] \"; empty for production"
+  type        = string
+  default     = ""
+}
+
+variable "daily_send_cap" {
+  description = "Most contact emails the API sends per UTC day; past it the form answers 429"
+  type        = number
+  default     = 25
 }

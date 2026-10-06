@@ -78,3 +78,16 @@ resource "aws_route53_record" "email_cname" {
   ttl     = 7200
   records = ["mailgun.org"]
 }
+
+# DMARC policy, added 2026-10-06 after a QA contact email landed in Gmail's
+# spam folder: SPF and DKIM passed, but the domain published no DMARC policy,
+# which Gmail counts against a sender. p=none only publishes a policy; it
+# never blocks or quarantines mail (contact@ forwarding included). Tighten it
+# to quarantine later, once mail is known to align.
+resource "aws_route53_record" "dmarc" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "_dmarc.jakekillpack.com"
+  type    = "TXT"
+  ttl     = 3600
+  records = ["v=DMARC1; p=none"]
+}

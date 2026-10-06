@@ -32,3 +32,18 @@ output "distribution_domain_name" {
   description = "CloudFront domain name; serves the site before the alias records exist"
   value       = aws_cloudfront_distribution.site.domain_name
 }
+
+output "api_function_name" {
+  description = "Lambda function the deploy updates"
+  value       = aws_lambda_function.api.function_name
+}
+
+output "experiences_table_name" {
+  description = "Table the deploy seeds from content/experiences.json"
+  value       = aws_dynamodb_table.experiences.name
+}
+
+output "api_endpoint" {
+  description = "HTTP API's own URL (CloudFront's /api/* origin)"
+  value       = aws_apigatewayv2_api.api.api_endpoint
+}

@@ -106,16 +106,35 @@ QA is one shared environment, so it shows whichever branch was deployed last. Th
 
 ### Local Stack
 
-Docker Compose services:
+`docker/compose.yaml`, run with `docker compose -f docker/compose.yaml up -d`. It lives in `docker/` rather than at the root: a root `compose.yaml` would take precedence over the Laravel stack's `docker-compose.yml`. Run one stack at a time. It moves to the root at cutover (Phase 6).
 
-- **`localstack`:** LocalStack's free Hobby plan, which is for non-commercial use; a personal portfolio qualifies. Since 2026-03-23 it requires a free LocalStack account and an auth token, kept in the gitignored `.env`. It runs DynamoDB, S3, and SSM.
-- **`api`:** Nest as a plain HTTP server in watch mode. Its AWS SDK clients point at `http://localstack:4566`.
-- **`web`:** the Vite dev server. It proxies `/api/*` to `api` and `/assets/*` to the LocalStack assets bucket, standing in for CloudFront's routing.
-- **`mailhog`:** catches contact-form email.
+Services:
 
-A LocalStack init hook (`docker/localstack/ready.d/seed.sh`, mounted at `/etc/localstack/init/ready.d/`) creates the table, the bucket, and fake secrets, seeds `content/experiences.json`, and uploads `assets/`. A fresh `docker compose up` gives a working site.
+- **`localstack`** (`localstack/localstack:2026.9.0`, port 4566): DynamoDB, S3, and SSM.
+  - LocalStack's free Hobby plan, which is for non-commercial use; a personal portfolio qualifies.
+  - It needs a free LocalStack account and its auth token in `docker/.env` as `LOCALSTACK_AUTH_TOKEN` (copy `docker/.env.example`). It won't start without one.
+- **`api`** (`node:24-alpine`, port 3000): Nest as a plain HTTP server in watch mode.
+  - `AWS_ENDPOINT_URL` points every AWS SDK client at LocalStack, so the code has no local-only branches.
+  - On every start it runs `npm run seed`, the same seeding a deploy uses.
+- **`web`** (Phase 4): the Vite dev server. It proxies `/api/*` to `api` and `/assets/*` to the LocalStack assets bucket, standing in for CloudFront's routing.
+- **`mailhog`** (web UI on port 8026, not 8025, so it doesn't clash with the Laravel stack's): catches contact-form email.
 
-What isn't emulated: the Hobby plan doesn't include API Gateway HTTP APIs or CloudFront, which are only on LocalStack's higher paid tiers. Locally, Vite stands in for CloudFront, and Nest runs without the Lambda wrapper. The wrapper (`lambda.ts`) gets a unit test, and QA exercises the full path for real.
+The LocalStack init hook (`docker/localstack/ready.d/seed.sh`) creates:
+- the `portfolio-experiences-local` table, with TTL
+- the `jakekillpack-assets-local` bucket, filled from `assets/`
+- a fake `/portfolio/local/mailgun/sending-key`
+
+A fresh `up` gives a working API at `http://localhost:3000/api/experiences`.
+
+Project commands run in the `api` container:
+
+```bash
+docker compose -f docker/compose.yaml run --rm --no-deps api npm test          # unit tests, no AWS needed
+docker compose -f docker/compose.yaml up -d localstack mailhog
+docker compose -f docker/compose.yaml run --rm api npm run test:e2e            # against LocalStack and Mailhog
+```
+
+What isn't emulated: the Hobby plan doesn't include API Gateway HTTP APIs or CloudFront, which are only on LocalStack's higher paid tiers. Locally, Vite stands in for CloudFront, and Nest runs without the Lambda wrapper. The wrapper (`lambda.ts`) has a unit test, and QA exercises the full path for real.
 
 If you'd rather not have a LocalStack account, `amazon/dynamodb-local` plus MinIO covers DynamoDB and S3, and secrets come from `.env`.
 
@@ -148,7 +167,7 @@ The same stack for each environment:
                           └───────┬──────────────────┬──────────┘
                                   ▼                  ▼
                    DynamoDB                      Mailgun API → your inbox
-                   portfolio-experiences-<env>   (key from /portfolio/<env>/mailgun/api-key)
+                   portfolio-experiences-<env>   (key from /portfolio/<env>/mailgun/sending-key)
 ```
 
 API surface (replaces the three Laravel routes):
@@ -166,10 +185,10 @@ Client-side routes (`/`, `/experience/:id`) are handled by a CloudFront Function
 | Area | Choice | Why, and the alternative |
 |------|--------|--------------------------|
 | Frontend | React + Vite + TypeScript + React Router. The existing SCSS partials and Bootstrap 4.6 are ported unchanged. | Parity first (confirmed 2026-10-04). A Tailwind restyle and a refresh of the experiences are separate projects after cutover. |
-| API runtime | NestJS (Express adapter) wrapped with `@codegenie/serverless-express`, bundled to one file with esbuild, on the newest Node.js LTS Lambda runtime, arm64, 512 MB | Bundling and a cached handler keep cold starts down; arm64 is 20% cheaper per GB-second. |
+| API runtime | NestJS 12 (Express adapter), ES modules, wrapped with `@codegenie/serverless-express` 5. `nest build` compiles it with TypeScript 6, and esbuild bundles that output into one file (`api/scripts/bundle.mjs`). Runs on `nodejs24.x`, the newest LTS Lambda runtime (Node 26 is only in preview), arm64, 512 MB. Tests use Vitest, Nest 12's default for ES-module projects. | Bundling and a cached handler keep cold starts down (measured on QA: about 1.4 s cold, 12–40 ms warm). esbuild bundles tsc's output rather than the source because it can't emit the decorator metadata Nest's dependency injection needs. arm64 is 20% cheaper per GB-second. |
 | API front door | API Gateway HTTP API, with stage and route throttling | $1 per million requests. A Lambda Function URL behind CloudFront OAC is free, but POSTs then need the browser to send a SHA-256 hash of the body. |
 | Data | DynamoDB on-demand, one table per environment, keyed by `id` (`"1"`–`"5"`, so old `/experience/{id}` links keep working). The source of truth is `content/experiences.json` in the repo; each deploy upserts it into that environment's table. | Confirmed 2026-10-04. Free at this size, and it keeps the API a real data-backed service. |
-| Email | Mailgun for both directions (decided 2026-10-04). The API sends the contact form through Mailgun's HTTP API with `From: portfolio@jakekillpack.com` and `Reply-To:` the visitor. Each environment has its own key at `/portfolio/<env>/mailgun/api-key`, read at cold start. `contact@jakekillpack.com` keeps forwarding through its Mailgun route. | One email provider, already verified, and the DNS records don't change. Keys stay out of Lambda environment variables, which the `killfood-ro` read-only role can see; that role is denied `ssm:GetParameter`. SES was the alternative: no key at all, but a second provider, since SES has no simple inbound forwarding. |
+| Email | Mailgun for both directions (decided 2026-10-04). The API sends the contact form through Mailgun's HTTP API with `From: portfolio@jakekillpack.com` and `Reply-To:` the visitor. Each environment has its own key at `/portfolio/<env>/mailgun/sending-key`, read at cold start. `contact@jakekillpack.com` keeps forwarding through its Mailgun route. | One email provider, already verified, and the DNS records don't change. Keys stay out of Lambda environment variables, which the `killfood-ro` read-only role can see; that role is denied `ssm:GetParameter`. SES was the alternative: no key at all, but a second provider, since SES has no simple inbound forwarding. |
 | Edge pricing | CloudFront flat-rate Free plan for production | $0/month with no overage charges, whatever the traffic or attack. It includes WAF with per-IP rate limiting, DDoS protection, the Route 53 zone fee, and 5 GB of S3 storage credits. Pay-as-you-go has a bigger free allowance (1 TB and 10M requests) but no ceiling past it, and WAF would cost about $7–8/month. |
 | Images | One S3 bucket per environment, served through CloudFront at `/assets/*` | See [Asset Strategy](#asset-strategy). |
 | CI/CD | GitHub Actions, using GitHub Environments (`qa`, `production`) with one OIDC deploy role each | No stored AWS keys, unlike killfood's `circleci-deploy` user. Free minutes for a public repo. This replaces CircleCI, ECR, and CodePipeline. |
@@ -258,13 +277,14 @@ terraform/
   - **At most 5 cache behaviors.**
   - **No legacy `forwarded_values` settings.**
   - **Functions and web ACLs used by this distribution alone.** Each environment has its own functions.
+- **AWS provider:** `envs/qa`, `envs/prod`, and `modules/site` use 6.x. Provider 5.x ended before Lambda added `nodejs24.x`, and it rejects the runtime. The upgrade (2026-10-04) planned no changes to existing resources beyond adding default tags to the CloudFront Functions, which 6.x can now tag. `global/` stays on 5.x until it needs something newer; killfood is unaffected.
 - Terraform 1.16 warns that the `dynamodb_table` backend argument is deprecated in favor of `use_lockfile = true`. It's kept here to match killfood; switch both at once later.
 
 ### Files
 
 | Path | What it configures | Phase |
 |------|--------------------|-------|
-| `global/dns.tf` | Imported `jakekillpack.com` zone and Mailgun records (✅ 2026-10-04; the records imported with no changes) | 0 |
+| `global/dns.tf` | Imported `jakekillpack.com` zone and Mailgun records (✅ 2026-10-04; the records imported with no changes), and a DMARC `p=none` record (✅ 2026-10-06) | 0 |
 | `global/iam.tf` | GitHub OIDC provider | 0 |
 | `global/monitoring.tf` | SNS topic `portfolio-alerts`, its Slack channel configuration and notifications-only role, and an AWS Budget filtered to `Project=portfolio` (see [Where Alerts Go](#where-alerts-go)) | 0 |
 | `modules/site/iam.tf` | The environment's three roles: today's `terraform/iam.tf`, with names suffixed by environment and trust moved to GitHub Environments | 0 |
@@ -273,9 +293,9 @@ terraform/
 | `modules/site/cloudfront.tf` | Distribution, one OAC shared by both buckets, the behaviors (default and `/assets/*`; `/api/*` in Phase 3), AWS-managed cache and security-headers policies, and two CloudFront Functions from `functions/`: a viewer-request function (www redirect, client-side routes, QA's `robots.txt`) and, on QA only, a viewer-response function that adds `X-Robots-Tag` | 2 |
 | `modules/site/functions/` | The functions' JavaScript, plus `functions.test.mjs` (run with `docker run --rm -v "$PWD/terraform/modules/site/functions:/f:ro" -w /f node:22-alpine node --test`) | 2 |
 | `modules/site/dns.tf` | Alias records (behind an on/off input) and certificate validation records, in the global zone | 2 |
-| `modules/site/dynamodb.tf` | The environment's table (on-demand) | 3 |
-| `modules/site/lambda.tf` | Function with reserved concurrency, 30-day log group, placeholder zip with `ignore_changes` on code | 3 |
-| `modules/site/apigateway.tf` | HTTP API, `$default` route → Lambda, stage and route throttling | 3 |
+| `modules/site/dynamodb.tf` | The environment's table (on-demand, TTL on `expiresAt` for the send counters, deletion protection) (✅ 2026-10-04) | 3 |
+| `modules/site/lambda.tf` | Function (`nodejs24.x`, arm64, 512 MB, reserved concurrency 5) and its settings, 30-day log group, and a placeholder that answers 503 until the first deploy, with `ignore_changes` on the code (✅ 2026-10-04) | 3 |
+| `modules/site/apigateway.tf` | HTTP API, `$default` and `POST /api/contact` routes → Lambda, throttles (5/s burst 10; contact 1/s burst 2) (✅ 2026-10-04) | 3 |
 | `modules/site/alarms.tf` | CloudWatch alarms → `portfolio-alerts` (production only) | 5 |
 
 The zone and its four Mailgun records already exist, so they're imported rather than created: `terraform import aws_route53_zone.main Z05239741F47L70Y5ONQR`, plus one import per record. The plan must then show no changes to them.
@@ -338,7 +358,7 @@ This is the pattern for any credential the API needs (decided 2026-10-04), and i
 
 ### Where Secrets Live
 
-- **Path:** `/portfolio/<env>/<service>/<name>`, lowercase and hyphenated. For example `/portfolio/prod/mailgun/api-key`, and later perhaps `/portfolio/prod/kafka/sasl-username`. Each environment has its own copy, so QA can use a separate Mailgun key that's revoked independently.
+- **Path:** `/portfolio/<env>/<service>/<name>`, lowercase and hyphenated. For example `/portfolio/prod/mailgun/sending-key`, and later perhaps `/portfolio/prod/kafka/sasl-username`. Each environment has its own copy, so QA can use a separate Mailgun key that's revoked independently.
 - **Fetched at runtime, never set at deploy time:**
   - A Lambda environment variable is plaintext to anyone who can read the function's configuration, including `killfood-ro`. It also lands in Terraform state if Terraform sets it.
   - A runtime fetch keeps only the parameter name in the configuration, and the value lives only in the function's memory. Access is granted per secret by IAM, and every read is logged in CloudTrail. `killfood-ro` is denied both `ssm:GetParameter*` and `secretsmanager:GetSecretValue`.
@@ -355,15 +375,44 @@ The AWS-managed `aws/ssm` key is fine for encryption within this account; its po
 
 ### Adding a Secret
 
-1. Store it once per environment with the admin profile, tagged for cost tracking, without leaving the value in shell history:
+1. **Store it with `secret-tool`** (a `~/bin` tool, 2026-10-06). Store each environment's value once:
 
-   ```bash
-   read -rs SECRET && AWS_PROFILE=killfood aws ssm put-parameter \
-     --name /portfolio/<env>/<service>/<name> --type SecureString --value "$SECRET" \
-     --tags Key=Project,Value=portfolio Key=Environment,Value=<qa|production> && unset SECRET
+   ```zsh
+   secret-tool put portfolio qa mailgun/sending-key          # hidden prompt: paste, then Enter
+   secret-tool put portfolio prod mailgun/sending-key --from-file ~/Downloads/key.txt
+   secret-tool ls portfolio                                  # names and versions, never values
+   secret-tool rm portfolio qa mailgun/old-name              # asks first
    ```
 
-   To change the value later, add `--overwrite` and drop `--tags`; the CLI doesn't accept both together.
+   What it handles:
+   - **Where the value comes from:** a hidden prompt, `--from-file` (the whole file is the value), or a pipe on stdin.
+   - **Cleanup:** it trims spaces and one pair of quotes.
+   - **Limits:** it refuses empty values, multi-line values, and anything over 4 KB. It also refuses a whole `.env` line (`"/path"=value` or `SOME_KEY=value`), which would store the name along with the secret.
+   - **New parameters:** created as `SecureString` and tagged `Project` and `Environment` (`production` for `prod`).
+   - **Existing parameters:** it asks before overwriting, and the original tags stay.
+   - **Never exposed:** values go to the AWS CLI through a private temp file, so they never appear on a command line, in shell history, or in output.
+   - **Profiles:** `put` and `rm` use `killfood`; `ls` uses `killfood-ro`. `--profile` overrides either.
+   - **Other projects:** add a branch to its `load_project` case.
+
+   **Without the tool,** run these lines one at a time in zsh. The prompt doesn't echo the value:
+
+   ```zsh
+   read -rs "SECRET?Value for /portfolio/qa/mailgun/sending-key: "; echo
+   AWS_PROFILE=killfood aws ssm put-parameter --no-cli-pager \
+     --name /portfolio/qa/mailgun/sending-key --type SecureString --value "$SECRET" \
+     --tags Key=Project,Value=portfolio Key=Environment,Value=qa \
+     --query Version --output text
+   unset SECRET
+   ```
+
+   - **Production:** use `Environment=production` for `/portfolio/prod/...` names.
+   - **To update an existing parameter:** add `--overwrite` and drop the `--tags` line; the CLI won't accept both together.
+   - **Why the plan's first version of this command seemed to hang:**
+     - `read -s` waited for input with no prompt and no echo.
+     - The `<qa|production>` placeholder breaks the shell if it's left in.
+     - The CLI's pager waited for `q`.
+   - **Never keep a value in a file in the repo,** even a gitignored one. It's one `.gitignore` edit away from a public commit, and editor and backup tools index it.
+
 2. Add `<service>/<name>` to `api_secret_parameters` in both `envs/qa` and `envs/prod`, then apply QA, then production. The variable's validation rejects names that don't fit the convention, and each role gains read access to that one parameter in its own environment.
 3. In code, read it through the single shared helper: Powertools for AWS Lambda's Parameters utility, `getParameter(name, { decrypt: true, maxAge: 300 })`.
    - The helper caches the value in module scope for 5 minutes, so a changed value takes effect without a redeploy.
@@ -616,7 +665,7 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - Missing files return 404.
    - `X-Robots-Tag: noindex, nofollow` is on every successful response. CloudFront Functions don't run on origin 4xx/5xx responses, which aren't indexed anyway. `/robots.txt` disallows all crawling.
    - Direct S3 URLs return 403. The certificate is Amazon-issued for the hostname.
-3. **Subscribe QA to a second Free plan** (optional; see step 5 for the console path).
+3. **QA stays on pay-as-you-go** (your decision, 2026-10-04). The option to subscribe it to a second Free plan remains (see step 5 for the console path).
    - If AWS won't accept a second plan under the same apex, QA stays on pay-as-you-go. That's still about $0, because the always-free tier covers 1 TB and 10M requests, but there's no WAF.
    - A Free plan uses one of the account's three slots, and the limit can't be raised. A Free plan cancels immediately, so a slot can be freed later if killfood needs one.
 4. ✅ 2026-10-04: **Applied production** (15 added), with its alias records off.
@@ -644,28 +693,74 @@ Each phase builds QA first, checks it, then applies the same change to productio
 
 ### Phase 3: Local Stack and API
 
-1. **Local stack:** create a LocalStack account (free Hobby plan) and put the auth token in `.env`. Add the Compose services and the init hook from [Local Stack](#local-stack).
-2. **Scaffold `api/` (NestJS):**
-   - `ExperiencesModule` and `ContactModule`.
-   - class-validator rules that mirror the Laravel validation, plus a honeypot field.
-   - The daily send cap: a counter item in the environment's table, incremented atomically with `UpdateItem`.
-   - A mail adapter: Mailgun's HTTP API (`api.mailgun.net`, domain `jakekillpack.com`) in Lambda, SMTP to Mailhog locally. From is always `portfolio@jakekillpack.com` and Reply-To is the visitor, carrying over the 2026-10-04 fix. QA prefixes the subject with `[QA]`.
-   - A secrets helper using Powertools' Parameters utility.
-   - `main.ts` (local) and `lambda.ts` (handler).
-3. **Content:** create `content/experiences.json` from `database/seeders/WorkExperienceSeeder.php`. Replace the hardcoded `brand == "Benegov"` check in the Blade view with data: a `null` `url` shows "(site no longer running)".
+1. ✅ 2026-10-04: **Local stack.** Added `docker/compose.yaml`, the init hook, and `docker/.env.example` (see [Local Stack](#local-stack)). You added the LocalStack auth token to `docker/.env`, and the free license activated.
+   - The hook created the table (with TTL), the bucket (all 14 images), and the fake Mailgun parameter.
+   - The API seeded the 5 experiences and served them at `http://localhost:3000/api/experiences`.
+2. ✅ 2026-10-04: **Scaffolded `api/`** with the Nest 12 CLI (ES modules, Vitest, oxlint), then replaced the sample app:
+   - **Endpoints:** `ExperiencesModule` and `ContactModule`, under the `/api` prefix.
+   - **Contact validation:** the Laravel rules and messages, one message per field, in Laravel's 400 shape (`{ message, errors: { field: [...] } }`). New limits: email at most 254 characters and message at most 5,000, which Laravel lacked. Fields are trimmed, and unknown fields are dropped.
+   - **Honeypot field `website`:** the frontend hides it. If it's filled, the API answers 200 but doesn't send the email or count it toward the cap.
+   - **Daily send cap:** a `contact-sends#<UTC date>` counter item, updated with one conditional `ADD`, so concurrent requests can't overshoot. Past the cap the API answers 429 and points to `contact@jakekillpack.com`. A failed send answers 502 with the same pointer and logs the cause.
+   - **Mail:** Mailgun's HTTP API in Lambda; nodemailer to Mailhog locally, loaded lazily so it stays out of the Lambda bundle. From is `portfolio@jakekillpack.com`, Reply-To is the visitor, and the subject is `[QA] Viewer Contact - <name>` on QA. The name is stripped of control characters, so it can't inject headers.
+   - **Secrets:** read through Powertools' `getParameter` with a 5-minute cache.
+   - **Caching:** every response is `no-store` unless a route sets otherwise. Successful experience GETs set `public, max-age=300`, after the lookup, so a 404 is never cached.
+   - **Lambda wrapper:** boots Nest once per execution environment. A failed boot is retried on the next invocation.
+3. ✅ 2026-10-04: **Content:** `content/experiences.json` matches the seeder field for field (checked by script), with `screenshot` as the WebP name and Benegov's `url` set to `null`.
+   - `api/src/experiences/content.ts` validates the file on every seed, so a typo fails the deploy.
+   - `npm run seed` upserts it. `--request-file` writes the same writes as JSON for `aws dynamodb batch-write-item`, which keeps admin credentials in the AWS CLI during a hand deploy.
+   - Seeding never deletes, so an experience removed from the file has to be deleted from the table by hand.
 4. **Tests:**
-   - Jest unit tests, including the Lambda wrapper and the send cap.
-   - e2e tests (supertest) against LocalStack.
-5. **Terraform:** add the table, the function (reserved concurrency 5), and the HTTP API (stage throttle 5/s, burst 10; contact route 1/s, burst 2). Apply QA, then production.
-6. **Mailgun keys:**
-   - Create two domain sending keys scoped to `jakekillpack.com`, one per environment.
-   - Store them with the [add-a-secret command](#adding-a-secret) as `/portfolio/qa/mailgun/api-key` and `/portfolio/prod/mailgun/api-key`.
+   - ✅ 46 unit tests pass (`npm test`). They cover config, validation through the real `ValidationPipe`, the email and its header-injection guard, the Mailgun request (against a local fake server), the service's honeypot, cap, and failure paths, the controllers, the content check, and the Lambda wrapper with an HTTP API event.
+   - ✅ The bundle was invoked with `node_modules` removed, as Lambda runs it. Validation still worked, so the decorator metadata survives bundling.
+   - ✅ 10 end-to-end tests pass against LocalStack and Mailhog (`npm run test:e2e`). They cover:
+     - the send cap with 20 concurrent requests, the counter's TTL, and a day rollover
+     - the seeded experiences over HTTP, and a counter id answering 404
+     - a contact email arriving in Mailhog with the right headers, the honeypot sending nothing, and a 429 past the cap
+     - the fake secret read from LocalStack's SSM
+   - ✅ Changing the cap's condition from `<` to `<=` made three of them fail, so they catch an off-by-one.
+5. ✅ 2026-10-04: **Terraform:** applied QA, then production (9 resources each: table, function, log group, HTTP API, integration, two routes, stage, invoke permission). The `/api/*` behavior and the narrowed IAM statements went in the same applies (step 7). Production's alias records are still off, so the site isn't live.
+6. ✅ **Mailgun keys.** You created two domain sending keys for `jakekillpack.com`, one per environment. They're stored as `/portfolio/qa/mailgun/sending-key` and `/portfolio/prod/mailgun/sending-key`:
+   - `SecureString`, under the AWS-managed `aws/ssm` key
+   - tagged `Project=portfolio` with the right `Environment`
+   - **2026-10-04, first stored as `mailgun/api-key`:** the documented command seemed to hang (see [Adding a Secret](#adding-a-secret)). So you put the keys in gitignored `secrets/*.env` files, and a script loaded them without printing the values.
+   - **2026-10-06, renamed to `mailgun/sending-key`:** Mailgun has both API keys and sending keys, and these are sending keys. Everything that names the parameter changed with it:
+     - the IAM statement and the Lambda setting, now `MAILGUN_SENDING_KEY_PARAMETER`
+     - the code's `sendingKeyParameter`
+     - the local fake in LocalStack
+   - **How the rename ran:**
+     1. `secret-tool` copied each value to the new name through a pipe.
+     2. QA's Terraform and the new code went out back to back.
+     3. A QA test email went through on the new name.
+     4. Production's Terraform was applied, and `secret-tool rm` deleted the old names.
+   - **Delete `secrets/`:** the keys live in Parameter Store and in Mailgun.
    - Don't revoke the old account key yet; see Resolved, Mailgun.
-7. **CloudFront `/api/*` behavior** (managed policies only, to stay within the Free plan):
+
+7. ✅ 2026-10-04: **CloudFront `/api/*` behavior** (managed policies only, to stay within the Free plan):
+   - origin: the HTTP API, HTTPS only. Viewers must use HTTPS too; plain HTTP gets 403.
    - origin request policy `Managed-AllViewerExceptHostHeader`
    - cache policy `Managed-CachingOptimized`, which keys on the path only. The API sets `Cache-Control: public, max-age=300` on the experience GETs. Only GET and HEAD are cached, so POSTs pass through.
    - on QA, the same `noindex` viewer-response function as the other behaviors
-8. **Contact flow, end to end:** on QA, check that the email arrives with `[QA]` in the subject, lands in the inbox rather than spam, and shows `dkim=pass` for `jakekillpack.com` (Mailgun signs with the existing `krs._domainkey` record). Check that the 26th send of the day returns 429. Then repeat on production.
+   - **The production distribution now has a non-S3 origin,** so the CloudFront console's **Rate limiting** option appears. Leave it off; the WAF rule from Phase 2 already does this.
+8. **Deploy and check the API on QA.**
+   - ✅ 2026-10-04: deployed by hand. The api container ran `npm run bundle` and wrote the seed request. The host AWS CLI then uploaded the zip, waited for the update, wrote the 5 experiences, and invalidated `/api/*`.
+   - **Checked through `https://qa.jakekillpack.com`:**
+     - `/api/experiences` returns the 5 experiences in order. The second request is a CloudFront `Hit`.
+     - `/api/experiences/2` returns its experience.
+     - Unknown ids and counter ids return 404 with `no-store`.
+     - `POST /api/contact {}` returns Laravel's 400 errors.
+     - Plain HTTP is refused.
+   - ✅ 2026-10-04: **Contact flow on QA**, through `https://qa.jakekillpack.com/api/contact`:
+     - A test message ("Phase 3 QA Test") got 200. Mailgun accepted it with the QA key read from Parameter Store, the logs show no errors, and today's counter went to 1.
+     - A honeypot submission got 200, but nothing was sent or counted.
+     - With the counter set to 25, the next send got 429 with the `contact@` pointer. The counter was then put back to 1. Sending 25 real emails would only have flooded the inbox.
+   - **Inbox check (you, 2026-10-06):** the email arrived. Gmail shows it signed by `jakekillpack.com` (DKIM passes), but it was flagged as spam, and you marked it not spam.
+     - **Likely cause:** `jakekillpack.com` has SPF and DKIM but no DMARC record, and Gmail counts a missing DMARC policy against a sender.
+     - **Other factors:** the key is new, and the test text read like automated mail.
+   - ✅ 2026-10-06: **Added DMARC:** `_dmarc.jakekillpack.com TXT "v=DMARC1; p=none"`, in `global/dns.tf`. Applied with 1 added and nothing else changed, and Cloudflare's resolver, Google's resolver, and Route 53 all return it.
+     - `p=none` only publishes a policy; it never blocks or quarantines mail, including `contact@` forwarding.
+     - Tighten it to `p=quarantine` once mail is known to align. Adding `rua=mailto:...` would send daily aggregate reports to check that against.
+     - **Also worth doing in Mailgun:** the domain's DKIM key is 1024-bit, and 2048-bit is the current norm. Rotating it in Mailgun means updating the `krs._domainkey` record in `global/dns.tf`.
+   - **Production:** still on the 503 placeholder, and it waits for Phase 5 (your decision, 2026-10-04). Its first deploy comes from `master` through the workflow. Repeat the contact check there afterward.
 9. **Switch production's WAF managed rule sets from Count to Block.** First check their sampled requests and CloudWatch metrics for matches on legitimate contact-form posts; `CommonRuleSet`'s body-size rule is the usual false positive. Switch them in the CloudFront console (**Security** tab → **Enable blocking**) or the WAF console (turn off each rule set's "Override rule group action to Count").
 
 ### Phase 4: React Frontend

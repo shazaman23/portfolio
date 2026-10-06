@@ -8,20 +8,16 @@
 #   - portfolio-assets-publisher-<env>  assumed from the admin CLI profile to
 #                                       upload images via `portfolio-assets-<env>`
 #
-# The buckets and distribution are in this module, so their policies use the
-# resource ARNs. The table and function arrive in Phase 3 of
-# docs/action-plans/serverless-rebuild.md; until then their ARNs are built
-# from the names in locals.tf. When each lands, swap the local for the
-# resource attribute.
+# Policies name this environment's own resources by their resource ARNs.
+# The log group's ARN is built from its name so the Lambda role can be
+# created before the log group exists.
 #
 # Inspection uses the existing account-wide `killfood-readonly` role
 # (`killfood-ro` CLI profile), so no portfolio read-only role is defined.
 # =============================================================================
 
 locals {
-  api_function_arn      = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${local.api_function_name}"
-  api_log_group_arn     = "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${local.api_function_name}"
-  experiences_table_arn = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${local.experiences_table_name}"
+  api_log_group_arn = "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${local.api_function_name}"
 
   # One ARN per listed secret, never the whole prefix. Parameter names start
   # with "/", so the prefix follows "parameter" directly.
@@ -79,7 +75,7 @@ resource "aws_iam_role_policy" "api_lambda" {
           "dynamodb:Scan",
           "dynamodb:UpdateItem"
         ]
-        Resource = [local.experiences_table_arn]
+        Resource = [aws_dynamodb_table.experiences.arn]
       },
       {
         # SecureString encrypted with the AWS-managed aws/ssm key, whose key
@@ -156,7 +152,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "lambda:GetFunction",
           "lambda:GetFunctionConfiguration"
         ]
-        Resource = [local.api_function_arn]
+        Resource = [aws_lambda_function.api.arn]
       },
       {
         Sid    = "UpsertExperiences"
@@ -165,7 +161,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "dynamodb:PutItem",
           "dynamodb:BatchWriteItem"
         ]
-        Resource = [local.experiences_table_arn]
+        Resource = [aws_dynamodb_table.experiences.arn]
       },
       {
         Sid    = "InvalidateCdn"

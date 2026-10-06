@@ -5,7 +5,8 @@
 #   default     -> site bucket (the React build), via the viewer-request
 #                  function (www redirect, client-side routes, QA robots.txt)
 #   /assets/*   -> assets bucket (media)
-#   /api/*      -> the HTTP API, added in Phase 3
+#   /api/*      -> the HTTP API (apigateway.tf); GETs cached as the API's
+#                  Cache-Control says (5 minutes for experiences)
 #
 # Everything here stays inside what the flat-rate Free plan allows, so
 # production can subscribe (and QA, if AWS accepts a second plan): AWS-managed
@@ -29,6 +30,12 @@ data "aws_cloudfront_cache_policy" "caching_optimized" {
 # HSTS (1 year, without includeSubDomains, so Mailgun's email. tracking host
 # isn't forced onto HTTPS), nosniff, X-Frame-Options SAMEORIGIN, and
 # Referrer-Policy strict-origin-when-cross-origin.
+# Forwards everything the viewer sent except Host (API Gateway needs its own
+# host name), including query strings and the request body. Used for /api/*.
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  name = "Managed-AllViewerExceptHostHeader"
+}
+
 data "aws_cloudfront_response_headers_policy" "security_headers" {
   name = "Managed-SecurityHeadersPolicy"
 }
@@ -94,6 +101,18 @@ resource "aws_cloudfront_distribution" "site" {
     origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
   }
 
+  origin {
+    origin_id   = "api"
+    domain_name = replace(aws_apigatewayv2_api.api.api_endpoint, "https://", "")
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   default_cache_behavior {
     target_origin_id           = "site"
     viewer_protocol_policy     = "redirect-to-https"
@@ -125,6 +144,28 @@ resource "aws_cloudfront_distribution" "site" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security_headers.id
+
+    dynamic "function_association" {
+      for_each = aws_cloudfront_function.noindex
+      content {
+        event_type   = "viewer-response"
+        function_arn = function_association.value.arn
+      }
+    }
+  }
+
+  # The API: experience GETs are cached for the 5 minutes the API asks for;
+  # POSTs (the contact form) always go through.
+  ordered_cache_behavior {
+    path_pattern               = "/api/*"
+    target_origin_id           = "api"
+    viewer_protocol_policy     = "https-only"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = true
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
     response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security_headers.id
 
     dynamic "function_association" {

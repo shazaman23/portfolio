@@ -32,3 +32,18 @@ output "distribution_domain_name" {
   description = "CloudFront domain name; serves the site before the alias records exist"
   value       = module.site.distribution_domain_name
 }
+
+output "api_function_name" {
+  description = "Lambda function the deploy updates"
+  value       = module.site.api_function_name
+}
+
+output "experiences_table_name" {
+  description = "Table the deploy seeds from content/experiences.json"
+  value       = module.site.experiences_table_name
+}
+
+output "api_endpoint" {
+  description = "HTTP API's own URL (CloudFront's /api/* origin)"
+  value       = module.site.api_endpoint
+}

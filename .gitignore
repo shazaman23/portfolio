@@ -22,6 +22,7 @@ docker-compose.yml
 *.swp
 xdebug.so
 /.idea
+secrets/
 
 # Terraform (every root: global, envs/qa, envs/prod)
 **/.terraform/
@@ -30,3 +31,11 @@ terraform/**/terraform.tfvars
 
 # Site media working copy (lives in the jakekillpack-assets-<env> buckets; see assets-tool in ~/bin)
 /assets/
+
+# Node projects (api/, later web/)
+node_modules/
+api/dist/
+api/build/
+api/coverage/
+# TypeScript incremental build cache
+*.tsbuildinfo

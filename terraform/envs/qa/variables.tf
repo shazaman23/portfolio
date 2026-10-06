@@ -8,3 +8,8 @@ variable "aws_account_id" {
   description = "AWS account ID"
   type        = string
 }
+
+variable "contact_recipient" {
+  description = "Inbox that receives contact-form messages"
+  type        = string
+}
