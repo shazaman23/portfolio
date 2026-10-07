@@ -90,3 +90,9 @@ variable "daily_send_cap" {
   type        = number
   default     = 25
 }
+
+variable "alarm_topic_arn" {
+  description = "SNS topic for the CloudWatch alarms (portfolio-alerts). Null creates no alarms, as on QA."
+  type        = string
+  default     = null
+}

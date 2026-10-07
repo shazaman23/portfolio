@@ -47,3 +47,8 @@ output "api_endpoint" {
   description = "HTTP API's own URL (CloudFront's /api/* origin)"
   value       = module.site.api_endpoint
 }
+
+output "alarm_names" {
+  description = "CloudWatch alarms that post to Slack"
+  value       = module.site.alarm_names
+}

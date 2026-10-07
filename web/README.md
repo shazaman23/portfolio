@@ -35,7 +35,7 @@ The dev server stands in for CloudFront. It proxies `/api/*` to the `api` contai
 
 `npm run build` writes `web/dist/`: `index.html`, `robots.txt`, and fingerprinted files under `static/`. They go under `static/` rather than Vite's default `assets/`, because CloudFront routes `/assets/*` to the media bucket.
 
-Until Phase 5's GitHub workflow exists, deploy by hand. Build in the container, then upload with the host's AWS CLI. Upload `static/` before `index.html`, so the live page never points at files that aren't there yet:
+GitHub Actions deploys: **Deploy QA** (run it from the Actions tab, any branch) and **Deploy Production** (every push to `master`), both through `.github/workflows/deploy.yml`. To deploy by hand instead, build in the container, then upload with the host's AWS CLI. Upload `static/` before `index.html`, so the live page never points at files that aren't there yet:
 
 ```bash
 # from the repo root; ENV is qa or prod

@@ -47,3 +47,8 @@ output "api_endpoint" {
   description = "HTTP API's own URL (CloudFront's /api/* origin)"
   value       = aws_apigatewayv2_api.api.api_endpoint
 }
+
+output "alarm_names" {
+  description = "CloudWatch alarms that post to Slack (none without alarm_topic_arn)"
+  value       = sort([for alarm in aws_cloudwatch_metric_alarm.api : alarm.alarm_name])
+}

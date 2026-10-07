@@ -57,6 +57,11 @@ data "aws_route53_zone" "main" {
   name = "jakekillpack.com"
 }
 
+# Created in terraform/global; posts to Slack (#portfolio-logs).
+data "aws_sns_topic" "alerts" {
+  name = "portfolio-alerts"
+}
+
 module "site" {
   source = "../../modules/site"
 
@@ -81,4 +86,6 @@ module "site" {
   noindex              = false
 
   contact_recipient = var.contact_recipient
+
+  alarm_topic_arn = data.aws_sns_topic.alerts.arn
 }

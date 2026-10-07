@@ -35,7 +35,7 @@ LocalStack needs an auth token in `docker/.env` (see `docker/.env.example`). Mai
 
 `npm run bundle` compiles with `tsc`, then bundles with esbuild into `build/lambda/index.mjs` (handler `index.handler`). esbuild bundles tsc's output because it can't emit the decorator metadata Nest needs.
 
-Until Phase 5's GitHub workflow exists, deploy by hand. Build in the container, then make the AWS calls with the host's AWS CLI, so admin credentials never enter the container:
+GitHub Actions deploys: **Deploy QA** (run it from the Actions tab, any branch) and **Deploy Production** (every push to `master`), both through `.github/workflows/deploy.yml`. To deploy by hand instead, build in the container, then make the AWS calls with the host's AWS CLI, so admin credentials never enter the container:
 
 ```bash
 # from the repo root; ENV is qa or prod

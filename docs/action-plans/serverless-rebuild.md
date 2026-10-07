@@ -296,7 +296,7 @@ terraform/
 | `modules/site/dynamodb.tf` | The environment's table (on-demand, TTL on `expiresAt` for the send counters, deletion protection) (✅ 2026-10-04) | 3 |
 | `modules/site/lambda.tf` | Function (`nodejs24.x`, arm64, 512 MB, reserved concurrency 5) and its settings, 30-day log group, and a placeholder that answers 503 until the first deploy, with `ignore_changes` on the code (✅ 2026-10-04) | 3 |
 | `modules/site/apigateway.tf` | HTTP API, `$default` and `POST /api/contact` routes → Lambda, throttles (5/s burst 10; contact 1/s burst 2) (✅ 2026-10-04) | 3 |
-| `modules/site/alarms.tf` | CloudWatch alarms → `portfolio-alerts` (production only) | 5 |
+| `modules/site/alarms.tf` | CloudWatch alarms → `portfolio-alerts` (production only) (✅ 2026-10-06) | 5 |
 
 The zone and its four Mailgun records already exist, so they're imported rather than created: `terraform import aws_route53_zone.main Z05239741F47L70Y5ONQR`, plus one import per record. The plan must then show no changes to them.
 
@@ -824,23 +824,49 @@ Each phase builds QA first, checks it, then applies the same change to productio
 
 ### Phase 5: CI/CD and Monitoring
 
-1. Add the workflows under `.github/workflows/`:
-   - `ci.yml`: on pull requests and pushes. Lint, test, and build, with no AWS access.
-   - `deploy.yml`: a reusable workflow (`workflow_call`) with an `environment` input. It runs in that GitHub Environment and:
-     1. tests and builds
-     2. assumes `portfolio-github-deploy-<env>`
-     3. syncs the site: hashed files `immutable`, `index.html` `no-cache`
-     4. updates the Lambda code, then waits with `aws lambda wait function-updated`
-     5. upserts `content/experiences.json` into that environment's table
-     6. invalidates `/index.html` and `/api/*`
-   - `deploy-qa.yml`: `workflow_dispatch` only. Pick any branch in the Actions UI, and it runs `deploy.yml` with `qa`.
-   - `deploy-prod.yml`: on push to `master`. Runs `deploy.yml` with `production`.
-2. Add `modules/site/alarms.tf` (enabled for production) wired to `portfolio-alerts`. Prove the Slack path by forcing one alarm into ALARM with `aws cloudwatch set-alarm-state`.
-3. Once a production deploy has worked through GitHub Actions, finish the deferred CircleCI cleanup from Phase 0, step 1.
+1. ✅ 2026-10-06: **Wrote the workflows** under `.github/workflows/`. Every action is pinned to a full commit SHA, with its version in a comment. `actionlint` (which includes shellcheck) reports nothing.
+   - **`ci.yml`:** runs on every push, and on pull requests to `master`, with no AWS access. Three jobs:
+     - **API:** lint, Prettier, unit tests, and the Lambda bundle
+     - **Web:** lint, Prettier, unit tests, and a type-checked build
+     - **Terraform:** `fmt -check`, `validate` for each root (no backend, no credentials), and the CloudFront Functions tests
+     - The API's end-to-end tests need LocalStack and Mailhog, so they stay local.
+   - **`deploy.yml`:** a reusable workflow (`workflow_call`) with an `environment` input. It runs in that GitHub Environment, one deploy per environment at a time, and:
+     1. tests and builds both apps before any AWS credentials exist
+     2. assumes `portfolio-github-deploy-<env>` through OIDC
+     3. updates the Lambda code, then waits with `aws lambda wait function-updated-v2`. The API goes first, so a new site never calls an old API.
+     4. upserts `content/experiences.json` into the environment's table (`node dist/seed.js`)
+     5. publishes the site in order: `static/` (`immutable`), `robots.txt`, `index.html` (`no-cache`), then deletes files from older builds
+     6. invalidates `/index.html` and `/api/*`, and waits for the invalidation to finish
+     7. **smoke test:** `SITE_URL` must serve this build's script and the right number of experiences
+   - **`deploy-qa.yml`:** `workflow_dispatch` only. Pick any branch in the Actions UI, and it runs `deploy.yml` with `qa`. GitHub only lists it once the file is on `master`.
+   - **`deploy-prod.yml`:** runs on push to `master`, and can be rerun from the Actions tab. Runs `deploy.yml` with `production`, whose branch rule still allows only `master`.
+   - **Bucket, function, and table names** come from the environment's short name (`qa`, `prod`). The deploy role can't look the distribution up, so it and two other values are GitHub Environment variables:
+
+     | Variable | `qa` | `production` |
+     |----------|------|--------------|
+     | `AWS_DEPLOY_ROLE_ARN` | `arn:aws:iam::412430435138:role/portfolio-github-deploy-qa` | `arn:aws:iam::412430435138:role/portfolio-github-deploy-prod` |
+     | `CLOUDFRONT_DISTRIBUTION_ID` | `E3GE43H7XZORDY` | `E1CXGUELSCL11M` |
+     | `SITE_URL` | `https://qa.jakekillpack.com` | `https://d248ehj2knjkmm.cloudfront.net` until the cutover, then `https://jakekillpack.com` |
+
+     A deploy stops at its first step with an error naming any variable that's missing.
+2. ✅ 2026-10-06: **Alarms.** `modules/site/alarms.tf` creates the four alarms from [Alerts (Production)](#alerts-production) when the environment passes `alarm_topic_arn`. Production passes the `portfolio-alerts` topic; QA passes nothing.
+   - **Naming and actions:** each alarm is named `portfolio-prod-<name>`, posts on the way into ALARM and again on recovery, and treats missing data as fine.
+   - **Applied:**
+     - QA's plan showed no changes.
+     - Production's plan was exactly the 4 alarms. A re-plan after the apply shows no changes.
+   - **The first evaluation posts one OK per alarm** to `#portfolio-logs`, because they move from `INSUFFICIENT_DATA` to `OK`. That happens once.
+   - **Slack test:** `set-alarm-state` put `portfolio-prod-lambda-errors` into ALARM. It went back to OK at the next evaluation. Both state changes published to `portfolio-alerts`, and SNS shows 2 delivered and 0 failed.
+   - **A real alarm, right away:** `portfolio-prod-api-5xx` fired once, caught by a check of production's `/api/experiences` minutes before the apply. Until production's first deploy, its API is the placeholder that answers 503, so any request to production's `/api/*` trips this alarm. It cleared by itself 5 minutes later, and all four are now OK.
+3. **First deploys through GitHub Actions** (yours):
+   1. Add the variables above to both GitHub Environments (Settings → Environments).
+   2. Push `rebuild` (CI runs) and merge it to `master`. That runs **Deploy Production**. The production site isn't public until its alias records are turned on (Phase 6), so a failed run affects nothing.
+   3. Run **Deploy QA** from the Actions tab.
+   4. Repeat the Phase 3 contact check on production (through the CloudFront domain).
+4. Once a production deploy has worked through GitHub Actions, finish the deferred CircleCI cleanup from Phase 0, step 1.
 
 ### Phase 6: Cutover and Cleanup
 
-1. Turn on production's alias records and apply. There's no A record today, so nothing is being replaced.
+1. Turn on production's alias records and apply. There's no A record today, so nothing is being replaced. Then change the `production` environment's `SITE_URL` to `https://jakekillpack.com`.
 2. Check every page, the contact form, and the old `/experience/{id}` URLs; run Lighthouse.
 3. Remove the Laravel app, `docker-config/`, `public/` media, `composer.*`, and `webpack.mix.js`. (`deploy/` and `.circleci/` were already removed on 2026-10-04.) Replace the stock Laravel `README.md`, and add a 3.0.0 entry to `docs/RELEASE.md`.
 4. Killfood follow-ups:
