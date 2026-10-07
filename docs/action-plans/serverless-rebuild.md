@@ -116,7 +116,7 @@ Services:
 - **`api`** (`node:24-alpine`, port 3000): Nest as a plain HTTP server in watch mode.
   - `AWS_ENDPOINT_URL` points every AWS SDK client at LocalStack, so the code has no local-only branches.
   - On every start it runs `npm run seed`, the same seeding a deploy uses.
-- **`web`** (Phase 4): the Vite dev server. It proxies `/api/*` to `api` and `/assets/*` to the LocalStack assets bucket, standing in for CloudFront's routing.
+- **`web`** (`node:24-alpine`, port 5173): the Vite dev server. It proxies `/api/*` to `api` and `/assets/*` to the LocalStack assets bucket, standing in for CloudFront's routing. Its commands are in `web/README.md`.
 - **`mailhog`** (web UI on port 8026, not 8025, so it doesn't clash with the Laravel stack's): catches contact-form email.
 
 The LocalStack init hook (`docker/localstack/ready.d/seed.sh`) creates:
@@ -765,20 +765,62 @@ Each phase builds QA first, checks it, then applies the same change to productio
 
 ### Phase 4: React Frontend
 
-1. Scaffold `web/` (Vite, React, TypeScript, React Router). Set `build.assetsDir: 'static'` so built JS and CSS don't land under `/assets/`, which CloudFront routes to the media bucket. Port the SCSS partials, Bootstrap 4.6, the Flaticon font, and Font Awesome 5. Drop the duplicate Bootstrap 4.0.0-beta.2 CDN stylesheet; the parity check in step 5 will show whether any of its rules were visible.
-2. Port the behaviors from the Vue instance in `resources/js/app.js`:
-   - About Me strips (one open at a time)
-   - screenshot rotation every 5 seconds
-   - hover selects a screenshot and pauses rotation for 10 seconds
-   - resize-driven monitor size
-   - the flash alert that hides after 5 seconds
-3. Lazy-load the About Me photos, so they download only when a strip opens.
-4. Contact form:
-   - inline field errors from the API's 400 response
-   - inputs kept on error (what `old()` did)
-   - a success flash
-   - a friendly message on 429 that points to `contact@jakekillpack.com`
-5. Parity check: take Playwright screenshots of the Laravel site (local) and the new site on QA at 1280 px and 375 px, and compare them side by side.
+1. ✅ 2026-10-06: **Scaffolded `web/`** with `create-vite`'s React + TypeScript template: React 19.3, React Router 8 (data router), Vite 8, TypeScript 6, Vitest 5 with Testing Library, oxlint, and Prettier set up like the API's. `build.assetsDir` is `static`, so built JS and CSS land under `/static/` instead of `/assets/`, which CloudFront routes to the media bucket.
+   - **Styles:** the SCSS partials are copied unchanged from `resources/sass`, apart from three edits:
+     - image URLs point at `web/src/assets`
+     - the Flaticon font is WOFF only; the EOT, TTF, and SVG copies and the WebKit-only SVG override are dropped (browsers no longer read SVG fonts)
+     - a new rule moves the honeypot field off-screen
+   - **Bootstrap 4.6.2** comes from npm. The 4.0.0-beta.2 CDN stylesheet is gone, and the parity check shows no visible change.
+   - **Font Awesome:** the site used one icon, the back arrow, so it's inlined as an SVG (Font Awesome Free 5.4.1, CC BY 4.0) instead of loading the icon font from a CDN.
+   - **Raleway** loads from Google Fonts with one `<link>` covering both of the old site's requests (weights 100, 300, 400, 600).
+   - **Page title:** `Portfolio`, the Laravel `APP_NAME`. It's one line in `web/index.html` if you'd like something else.
+   - **Local stack:** a `web` service in `docker/compose.yaml` (see [Local Stack](#local-stack)).
+2. ✅ 2026-10-06: **Ported the Vue behaviors**, with timings unchanged:
+   - About Me strips, one open at a time
+   - the screenshot changes every 5 seconds
+   - hovering a menu item shows its screenshot and pauses the rotation; it restarts 10 seconds later, so the next change comes 5 seconds after that
+   - the monitor resizes with the window, using the same breakpoints and ratios
+   - **Deliberate differences:**
+     - The rotation follows the experiences' order from the API, starting with the first. The Vue code had its own hardcoded list starting with `benegov-site`, and its first tick showed the same image again.
+     - Focusing a menu link with the keyboard selects its screenshot, like a hover.
+     - The flash alert is removed after it fades. The Laravel alert stayed in place at opacity 0.
+3. ✅ 2026-10-06: **About Me photos** aren't rendered until their strip first opens, so the page loads none of the five up front. A photo stays loaded after its strip closes.
+4. ✅ 2026-10-06: **Contact form**, posting JSON to `/api/contact`:
+   - a 400 shows each field's errors above that field, as Laravel did, and keeps what was typed
+   - success clears the form and shows the flash alert, which fades after 5 seconds. **This is new:** the Laravel controller never set its `status` message, so its success flash never actually appeared.
+   - a 429 or a failed send shows a message in the form that links to `contact@jakekillpack.com`, and keeps what was typed
+   - the button is disabled while a message is sending
+   - the hidden `website` honeypot field is off-screen, has `tabindex="-1"` and `autocomplete="off"`, and is hidden from screen readers
+   - **Also new:** a 404 page (tagged `noindex`, since CloudFront still answers 200) for unknown paths and experience ids, and a short message if the experiences can't be loaded.
+5. **Parity check.**
+   - ✅ 2026-10-06, **locally:** Playwright compared the Laravel stack (`http://localhost`) with the React site at 1280 px and 375 px, first on the Vite dev server and then on a production build (`vite preview`). States compared:
+     - the home page, with the same screenshot showing
+     - an About Me strip open
+     - contact-form errors
+     - all five experience pages
+     - the back link landing on My Work
+   - **Results:**
+     - Visible text is identical on every page, except the honeypot's off-screen "Website" label.
+     - Pixels: the home page and the contact-error states differ by 0.00%. The other states differ by 0.05% or less, all from the WebP re-encoding of the photos and screenshots and the SVG back arrow.
+   - **Contact flow, locally:** a real send reached Mailhog with the right From, Reply-To, and subject, and the flash faded and was removed. With the counter forced to 25, the form showed the daily-limit message with its `mailto:` link, and the counter was then put back.
+   - ✅ 2026-10-06, **on QA:**
+     - **Deploy:** by hand, using the steps in `web/README.md`. The build replaced the Phase 2 placeholder in `jakekillpack-site-qa`, and `/index.html` was invalidated.
+     - **Edge checks:** all 23 pass through `https://qa.jakekillpack.com`. They cover:
+       - `/`, `/experience/1`, and an unknown path all serve the app shell
+       - `index.html` is `no-cache`, and the `/static/` JS is `immutable`
+       - `/api/experiences`, the media, the security and `noindex` headers, `robots.txt`, and the certificate
+       - direct S3 URLs are refused
+     - **Parity:** the same comparison against QA gave the same results as locally. The text matches, and the pixel differences are the same 0.00–0.05%.
+     - **Contact form:** the comparison's over-long names got QA's 400 and weren't counted toward the daily cap.
+   - **Production:** still on the placeholder. Its first frontend deploy comes from `master` through the Phase 5 workflow.
+6. **Tests:** ✅ 61 unit tests pass (`npm test`). They cover:
+   - the API client
+   - the monitor sizes
+   - the strips, rotation, and pause, using fake timers
+   - the form's success, 400, 429, failure, and honeypot paths
+   - the flash timing
+   - the routes, the experience page, and the 404s
+   - **Mutation checks:** 11 deliberate breaks each made at least one test fail. Examples: a 0-second hover pause, photos rendered before their strip opens, the form not clearing after a send, a wrong monitor ratio, and a 429 not recognized.
 
 ### Phase 5: CI/CD and Monitoring
 

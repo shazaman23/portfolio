@@ -66,6 +66,26 @@ services:
       mailhog:
         condition: service_started
 
+  # The Vite dev server, standing in for CloudFront's routing: it proxies
+  # /api/* to the api container and /assets/* to the LocalStack assets bucket
+  # (see web/vite.config.ts). Open http://localhost:5173.
+  web:
+    image: node:24-alpine
+    user: node
+    working_dir: /app/web
+    command: npm run dev
+    environment:
+      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+      API_URL: http://api:3000
+      ASSETS_BUCKET_URL: http://localstack:4566/jakekillpack-assets-local
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ..:/app
+    depends_on:
+      api:
+        condition: service_started
+
   # Catches contact-form email. Web UI on 8026, so it doesn't clash with the
   # Laravel stack's Mailhog on 8025.
   mailhog:

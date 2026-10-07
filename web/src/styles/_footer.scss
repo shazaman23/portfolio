@@ -1,0 +1,50 @@
+.footer {
+
+  h4 {
+    margin-top: 20px;
+  }
+
+  .contact-info {
+    flex-direction: row;
+    padding: 1em 0;
+    font-size: .8em;
+    background: $brand-main-flat;
+    color: $brand-main-cool;
+    a {
+      color: $brand-main-cool;
+
+      &:hover {
+        color: $brand-main-warm;
+      }
+    }
+  }
+
+  .icon-bib {
+    flex-direction: row;
+    font-size: .7em;
+    margin: 1em 2em;
+  }
+}
+
+@media(max-width: 400px) {
+  .footer {
+    h4 {
+      margin: 1em auto;
+    }
+
+    .contact-info {
+      flex-direction: column;
+      padding-top: 0;
+      padding-bottom: 2em;
+    }
+
+    .icon-bib {
+      flex-direction: column;
+      margin: 0 0 1em 0;
+
+      ul {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

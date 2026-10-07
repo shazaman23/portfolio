@@ -32,10 +32,12 @@ terraform/**/terraform.tfvars
 # Site media working copy (lives in the jakekillpack-assets-<env> buckets; see assets-tool in ~/bin)
 /assets/
 
-# Node projects (api/, later web/)
+# Node projects (api/, web/)
 node_modules/
 api/dist/
 api/build/
 api/coverage/
+web/dist/
+web/coverage/
 # TypeScript incremental build cache
 *.tsbuildinfo
