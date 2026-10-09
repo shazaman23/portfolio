@@ -3,35 +3,12 @@
 # =============================================================================
 # The zone and its Mailgun records existed before this Terraform (they came
 # from an older portfolio state, archived 2026-10-04 at
-# portfolio/archive/terraform-2026-05-03.tfstate) and were imported here.
+# portfolio/archive/terraform-2026-05-03.tfstate) and were imported here on
+# 2026-10-04. The import blocks were removed once applied: they're no-ops for
+# resources already in state.
 # The Mailgun records carry contact@jakekillpack.com mail; keep them exactly
 # as they are. Each environment adds its own records in modules/site.
 # =============================================================================
-
-import {
-  to = aws_route53_zone.main
-  id = "Z05239741F47L70Y5ONQR"
-}
-
-import {
-  to = aws_route53_record.mx
-  id = "Z05239741F47L70Y5ONQR_jakekillpack.com_MX"
-}
-
-import {
-  to = aws_route53_record.spf
-  id = "Z05239741F47L70Y5ONQR_jakekillpack.com_TXT"
-}
-
-import {
-  to = aws_route53_record.dkim
-  id = "Z05239741F47L70Y5ONQR_krs._domainkey.jakekillpack.com_TXT"
-}
-
-import {
-  to = aws_route53_record.email_cname
-  id = "Z05239741F47L70Y5ONQR_email.jakekillpack.com_CNAME"
-}
 
 resource "aws_route53_zone" "main" {
   name    = "jakekillpack.com"
