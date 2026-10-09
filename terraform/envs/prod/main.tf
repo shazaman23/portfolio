@@ -82,7 +82,7 @@ module "site" {
 
   hostnames            = ["jakekillpack.com", "www.jakekillpack.com"]
   route53_zone_id      = data.aws_route53_zone.main.zone_id
-  create_alias_records = false # true at cutover (Phase 6): this is what makes the site live
+  create_alias_records = true # turned on at cutover (Phase 6, 2026-10-09): this is what makes the site live
   noindex              = false
 
   contact_recipient = var.contact_recipient

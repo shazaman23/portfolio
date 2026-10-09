@@ -129,6 +129,30 @@ describe('experience page', () => {
     expect(screen.queryByText(/Books icon made by/)).toBeNull();
   });
 
+  it('shows only an empty showcase until the experience loads', async () => {
+    // Anything shown earlier would move when the content arrives: the footer
+    // gets pushed down, and the Back link sits at a percentage of the page's
+    // height. Lighthouse scored that as the worst possible layout shift on
+    // mobile. The empty title keeps the top margin the real one gives the
+    // page on phones, so the showcase doesn't drop when it arrives.
+    let respond: (response: Response) => void = () => {};
+    stubFetch(() => new Promise<Response>((resolve) => (respond = resolve)));
+    const { container } = renderAt('/experience/1');
+
+    const showcase = container.querySelector('.showcase')!;
+    expect(showcase.children).toHaveLength(1);
+    expect(showcase.firstElementChild).toHaveClass('main-title');
+    expect(showcase.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+    expect(showcase).toHaveTextContent('');
+    expect(screen.queryByText('Icon Attributions')).toBeNull();
+
+    respond(jsonResponse(200, uk2));
+    expect(
+      await screen.findByRole('link', { name: /Back/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Icon Attributions')).toBeInTheDocument();
+  });
+
   it('is a 404 for an unknown experience', async () => {
     stubFetch(() => jsonResponse(404, { message: 'Not Found' }));
     renderAt('/experience/9');
