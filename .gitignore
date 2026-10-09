@@ -26,9 +26,3 @@ web/dist/
 web/coverage/
 # TypeScript incremental build cache
 *.tsbuildinfo
-
-# Local files left from the Laravel app (removed in 3.0.0). Drop these lines
-# once the files are deleted.
-/docker-compose.yml
-/composer.lock
-/.phpunit.result.cache
