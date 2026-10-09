@@ -132,13 +132,15 @@ jobs:
             --zip-file fileb://release/lambda.zip --query CodeSha256 --output text
           aws lambda wait function-updated-v2 --function-name "portfolio-api-$ENV"
 
-      # Upserts the experiences; it never deletes (see api/src/seed.ts).
+      # Upserts the experiences; it never deletes (see api/src/seed.ts). The
+      # whole response is checked with jq: with --query, the CLI prints nothing
+      # at all for an empty UnprocessedItems.
       - name: Load the experiences
         run: |
-          unprocessed=$(aws dynamodb batch-write-item --request-items file://release/seed-request.json \
-            --query UnprocessedItems --output json)
-          if [[ $unprocessed != '{}' && $unprocessed != null ]]; then
+          response=$(aws dynamodb batch-write-item --request-items file://release/seed-request.json --output json)
+          if ! jq -e '(.UnprocessedItems // {}) | length == 0' <<<"$response" >/dev/null; then
             echo "::error::DynamoDB didn't write every experience; rerun the deploy"
+            echo "$response"
             exit 1
           fi
 
