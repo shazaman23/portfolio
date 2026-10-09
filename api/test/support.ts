@@ -1,8 +1,8 @@
 // Shared helpers for the end-to-end tests, which run in the api container
-// against LocalStack and Mailhog (docker/compose.yaml):
+// against LocalStack and Mailhog (compose.yaml):
 //
-//   docker compose -f docker/compose.yaml up -d localstack mailhog
-//   docker compose -f docker/compose.yaml run --rm api npm run test:e2e
+//   docker compose up -d localstack mailhog
+//   docker compose run --rm api npm run test:e2e
 
 // A random day far in the future, so each test run gets its own contact-send
 // counters and never collides with real local use or an earlier run.

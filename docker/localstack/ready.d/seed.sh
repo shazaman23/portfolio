@@ -21,7 +21,7 @@ awslocal s3 mb "s3://$BUCKET" >/dev/null
 if [ -d /seed/assets ] && [ -n "$(ls -A /seed/assets)" ]; then
   awslocal s3 sync /seed/assets "s3://$BUCKET/assets/" --only-show-errors
 else
-  echo "seed.sh: ../assets is empty; run 'mkdir -p assets && assets-tool pull portfolio prod' for images"
+  echo "seed.sh: assets/ is empty; run 'mkdir -p assets && assets-tool pull portfolio prod' for images"
 fi
 
 # Fake secret, so the Parameter Store code path runs locally.

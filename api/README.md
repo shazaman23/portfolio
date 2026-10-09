@@ -10,13 +10,13 @@ The NestJS API behind `/api/*` on jakekillpack.com. It runs on AWS Lambda behind
 
 ## Running It
 
-Everything runs in the `api` container from `docker/compose.yaml`. Run these from the repo root:
+Everything runs in the `api` container from `compose.yaml`. Run these from the repo root:
 
 ```bash
-docker compose -f docker/compose.yaml run --rm --no-deps api npm test     # unit tests, no AWS needed
-docker compose -f docker/compose.yaml up -d                               # LocalStack, Mailhog, and the API on :3000
-docker compose -f docker/compose.yaml run --rm api npm run test:e2e       # against LocalStack and Mailhog
-docker compose -f docker/compose.yaml run --rm --no-deps api npm run lint
+docker compose run --rm --no-deps api npm test  # unit tests, no AWS needed
+docker compose up -d                            # LocalStack, Mailhog, and the API on :3000
+docker compose run --rm api npm run test:e2e    # against LocalStack and Mailhog
+docker compose run --rm --no-deps api npm run lint
 ```
 
 LocalStack needs an auth token in `docker/.env` (see `docker/.env.example`). Mailhog's inbox is at http://localhost:8026.
@@ -39,7 +39,7 @@ GitHub Actions deploys: **Deploy QA** (run it from the Actions tab, any branch) 
 
 ```bash
 # from the repo root; ENV is qa or prod
-docker compose -f docker/compose.yaml run --rm --no-deps -e TABLE_NAME=portfolio-experiences-$ENV api \
+docker compose run --rm --no-deps -e TABLE_NAME=portfolio-experiences-$ENV api \
   sh -c 'npm run bundle && node dist/seed.js --request-file build/seed-request.json'
 (cd api/build/lambda && zip -q -9 ../lambda.zip index.mjs index.mjs.map)
 AWS_PROFILE=killfood aws lambda update-function-code --function-name portfolio-api-$ENV --zip-file fileb://api/build/lambda.zip
