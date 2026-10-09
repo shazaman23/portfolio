@@ -1,0 +1,76 @@
+.contact-me {
+  background: $brand-main-cool;
+  color: $brand-main-flat;
+  padding-bottom: 3em;
+
+  .main-title {
+    margin-bottom: .5em;
+  }
+
+  .main-email {
+    color: $brand-main-warm;
+    margin-bottom: 1em;
+
+    i {
+      padding-right: .5em;
+    }
+  }
+
+  .email-form {
+    width: 90%;
+    margin: 1em auto;
+
+    button {
+      color: black;
+    }
+
+    .alert {
+      font-size: 15px;
+      padding: 0;
+      margin-bottom: 10px;
+    }
+
+    .simple-set:nth-of-type(1) {
+      padding-right: 1em;
+    }
+
+    .simple-set:nth-of-type(2) {
+      padding-left: 1em;
+    }
+
+    // Honeypot (new in the React port): off-screen rather than display: none,
+    // which some bots skip.
+    .contact-website {
+      position: absolute;
+      left: -10000px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+  }
+}
+
+@media(max-width: 700px) {
+  .contact-me {
+    .email-form {
+      .form-row {
+        .mobile-pop {
+          flex: 1 1 auto;
+          padding: 0;
+        }
+      }
+    }
+  }
+}
+
+@media(max-width: 375px) {
+  .contact-me {
+    &.row {
+      padding: 0 1em;
+    }
+    
+    .main-email {
+      font-size: 17px;
+    }
+  }
+}

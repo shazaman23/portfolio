@@ -1,0 +1,19 @@
+# Deploys master to production on every push to master. It can also be rerun
+# from the Actions tab; the production environment only accepts master.
+name: Deploy Production
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+    permissions:
+      contents: read
+      id-token: write

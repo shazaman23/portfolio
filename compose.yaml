@@ -1,0 +1,95 @@
+# The local stack: the site at http://localhost:5173, against LocalStack and
+# Mailhog. See README.md, and "Local Stack" in
+# docs/action-plans/serverless-rebuild.md.
+#
+#   cp docker/.env.example docker/.env      # then add your LocalStack auth token
+#   docker compose up -d
+#
+# The project keeps the name it had during the rebuild, so it can't collide
+# with the old Laravel stack's "portfolio" project if that still exists.
+name: portfolio-rebuild
+
+services:
+  # DynamoDB, S3, and SSM. The ready.d hook creates the table, the assets
+  # bucket (filled from assets/), and fake secrets.
+  localstack:
+    image: localstack/localstack:2026.9.0
+    # LOCALSTACK_AUTH_TOKEN, which LocalStack can't start without (see
+    # docker/.env.example).
+    env_file: docker/.env
+    environment:
+      SERVICES: dynamodb,s3,ssm
+      AWS_DEFAULT_REGION: us-west-2
+    ports:
+      - "127.0.0.1:4566:4566"
+    volumes:
+      - ./docker/localstack/ready.d:/etc/localstack/init/ready.d:ro
+      - ./assets:/seed/assets:ro
+    healthcheck:
+      # Healthy once the ready.d hooks have finished.
+      test: ["CMD-SHELL", "curl -sf localhost:4566/_localstack/init/ready | grep -q '\"completed\": *true'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # NestJS as a plain HTTP server in watch mode, against LocalStack and Mailhog.
+  # It loads content/experiences.json into the table on every start.
+  api:
+    image: node:24-alpine
+    user: node
+    working_dir: /app/api
+    command: sh -c "npm run seed && npm run start:dev"
+    environment:
+      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+      PORT: "3000"
+      APP_ENV: local
+      AWS_REGION: us-west-2
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      TABLE_NAME: portfolio-experiences-local
+      DAILY_SEND_CAP: "25"
+      MAIL_TRANSPORT: smtp
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      MAIL_FROM: Jake's Portfolio <portfolio@jakekillpack.com>
+      MAIL_TO: portfolio-local@example.com
+      MAIL_SUBJECT_PREFIX: "[LOCAL] "
+      MAILGUN_DOMAIN: jakekillpack.com
+      MAILGUN_SENDING_KEY_PARAMETER: /portfolio/local/mailgun/sending-key
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+    depends_on:
+      localstack:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+
+  # The Vite dev server, standing in for CloudFront's routing: it proxies
+  # /api/* to the api container and /assets/* to the LocalStack assets bucket
+  # (see web/vite.config.ts). Open http://localhost:5173.
+  web:
+    image: node:24-alpine
+    user: node
+    working_dir: /app/web
+    command: npm run dev
+    environment:
+      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+      API_URL: http://api:3000
+      ASSETS_BUCKET_URL: http://localstack:4566/jakekillpack-assets-local
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - .:/app
+    depends_on:
+      api:
+        condition: service_started
+
+  # Catches contact-form email. Web UI on 8026, so it doesn't clash with the
+  # Laravel stack's Mailhog on 8025.
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "127.0.0.1:8026:8025"

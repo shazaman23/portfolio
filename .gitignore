@@ -1,24 +1,28 @@
-/node_modules
-/public/hot
-/public/storage
-/storage/*.key
-/vendor
+# Secrets and local settings
 .env
-.env.backup
 *.env
-.phpunit.result.cache
-
+/secrets/
 docker-compose.override.yml
+
+# Editors
 /.idea
-/.vagrant
 .vscode
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-composer.lock
-npm-debug.log
-docker-compose.yml
 *.swp
-xdebug.so
-/.idea
+
+# Terraform (every root: global, envs/qa, envs/prod)
+**/.terraform/
+terraform/**/*.tfstate*
+terraform/**/terraform.tfvars
+
+# Site media working copy (lives in the jakekillpack-assets-<env> buckets; see assets-tool in ~/bin)
+/assets/
+
+# Node projects (api/, web/)
+node_modules/
+api/dist/
+api/build/
+api/coverage/
+web/dist/
+web/coverage/
+# TypeScript incremental build cache
+*.tsbuildinfo
