@@ -1,5 +1,5 @@
 // Upserts content/experiences.json into the table named by TABLE_NAME. Runs on
-// every local start (docker/compose.yaml) and every deploy.
+// every local start (compose.yaml) and every deploy.
 //
 //   TABLE_NAME=portfolio-experiences-qa npm run seed
 //

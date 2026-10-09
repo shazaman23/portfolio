@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { monitorSize } from './monitor';
 
 // Expected values come from handleResize() in the Laravel site's
-// resources/js/app.js.
+// resources/js/app.js (removed with Laravel in 3.0.0; see git history).
 describe('monitorSize', () => {
   it.each([1280, 769])(
     'is the full 632 x 422 screen above 768 px (%i)',

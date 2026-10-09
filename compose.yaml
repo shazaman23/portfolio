@@ -1,29 +1,30 @@
-# Local stack for the serverless rebuild. See "Local Stack" in
+# The local stack: the site at http://localhost:5173, against LocalStack and
+# Mailhog. See README.md, and "Local Stack" in
 # docs/action-plans/serverless-rebuild.md.
 #
 #   cp docker/.env.example docker/.env      # then add your LocalStack auth token
-#   docker compose -f docker/compose.yaml up -d
+#   docker compose up -d
 #
-# It lives here rather than at the repo root because a root compose.yaml would
-# take precedence over the Laravel stack's docker-compose.yml. Run one stack at
-# a time. At cutover (Phase 6) this moves to the root.
+# The project keeps the name it had during the rebuild, so it can't collide
+# with the old Laravel stack's "portfolio" project if that still exists.
 name: portfolio-rebuild
 
 services:
   # DynamoDB, S3, and SSM. The ready.d hook creates the table, the assets
-  # bucket (filled from ../assets), and fake secrets.
+  # bucket (filled from assets/), and fake secrets.
   localstack:
     image: localstack/localstack:2026.9.0
+    # LOCALSTACK_AUTH_TOKEN, which LocalStack can't start without (see
+    # docker/.env.example).
+    env_file: docker/.env
     environment:
-      # Required: LocalStack refuses to start without it (see docker/.env.example).
-      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
       SERVICES: dynamodb,s3,ssm
       AWS_DEFAULT_REGION: us-west-2
     ports:
       - "127.0.0.1:4566:4566"
     volumes:
-      - ./localstack/ready.d:/etc/localstack/init/ready.d:ro
-      - ../assets:/seed/assets:ro
+      - ./docker/localstack/ready.d:/etc/localstack/init/ready.d:ro
+      - ./assets:/seed/assets:ro
     healthcheck:
       # Healthy once the ready.d hooks have finished.
       test: ["CMD-SHELL", "curl -sf localhost:4566/_localstack/init/ready | grep -q '\"completed\": *true'"]
@@ -59,7 +60,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
-      - ..:/app
+      - .:/app
     depends_on:
       localstack:
         condition: service_healthy
@@ -81,7 +82,7 @@ services:
     ports:
       - "127.0.0.1:5173:5173"
     volumes:
-      - ..:/app
+      - .:/app
     depends_on:
       api:
         condition: service_started

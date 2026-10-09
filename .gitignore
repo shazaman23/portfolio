@@ -1,28 +1,13 @@
-/node_modules
-/public/hot
-/public/storage
-/storage/*.key
-/vendor
+# Secrets and local settings
 .env
-.env.backup
 *.env
-.phpunit.result.cache
-
-docker-compose.override.yml
-/.idea
-/.vagrant
-.vscode
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-composer.lock
-npm-debug.log
-docker-compose.yml
-*.swp
-xdebug.so
-/.idea
 /secrets/
+docker-compose.override.yml
+
+# Editors
+/.idea
+.vscode
+*.swp
 
 # Terraform (every root: global, envs/qa, envs/prod)
 **/.terraform/
@@ -41,3 +26,9 @@ web/dist/
 web/coverage/
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Local files left from the Laravel app (removed in 3.0.0). Drop these lines
+# once the files are deleted.
+/docker-compose.yml
+/composer.lock
+/.phpunit.result.cache

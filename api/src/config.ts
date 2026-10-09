@@ -1,5 +1,5 @@
 // Typed settings read from environment variables. Terraform sets them on the
-// Lambda (modules/site/lambda.tf); docker/compose.yaml sets them locally.
+// Lambda (modules/site/lambda.tf); compose.yaml sets them locally.
 // Secrets are never here: MAILGUN_SENDING_KEY_PARAMETER is the parameter's name,
 // and the key itself is read from Parameter Store at runtime.
 

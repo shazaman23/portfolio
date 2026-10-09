@@ -1,3 +1,13 @@
+Version 3.0.0 -- 10/09/2026
+
+    - Rebuild the site as a React single-page app on S3 and CloudFront, with the same pages, styles, and behavior
+    - Replace Laravel with a NestJS API on AWS Lambda, with experiences in DynamoDB
+    - Send the contact form through Mailgun, with a daily send cap and a honeypot field
+    - Move photos and screenshots out of git into S3, converted to WebP
+    - Add a QA environment at qa.jakekillpack.com
+    - Manage all infrastructure with Terraform, and deploy with GitHub Actions
+    - Add production alarms that post to Slack
+
 Version 2.0.0 -- 11/12/2021
 
     - Update to latest version of Laravel (8.*)

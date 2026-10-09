@@ -1,6 +1,8 @@
 # Portfolio Serverless Rebuild
 
-Status: proposal · Written 2026-10-03 · Updated 2026-10-04 (QA environment, limits and alerts)
+Status: **live since 2026-10-09** (cutover, Phase 6) · Written 2026-10-03 · Updated 2026-10-09
+
+Still open: the killfood follow-ups (Phase 6, step 4), the CircleCI cleanup (Phase 5, step 4), and switching the WAF managed rules to Block (Phase 3, step 9).
 
 Rebuild jakekillpack.com as-is (same pages, look, and behavior) as a React single-page app on S3 + CloudFront, with a NestJS API on Lambda, images on S3, a QA environment at `qa.jakekillpack.com`, and its own Terraform and IAM roles, patterned after killfood.
 
@@ -26,7 +28,7 @@ Leftovers in the account (inventoried with `killfood-ro` on 2026-10-03; cleaned 
 
 | Resource | State | Bills while idle? |
 |----------|-------|-------------------|
-| ECR repo `portfolio` | 3 images, ~2 GB, last push 2022-10-16. **Kept on purpose** (see [Phase 0, step 2](#phase-0-safety-and-foundations-no-visible-change)) | Yes, up to ~$0.20/month |
+| ECR repo `portfolio` | 3 images, ~2 GB, last push 2022-10-16. Kept until the cutover, then **deleted 2026-10-09** (see [Phase 0, step 2](#phase-0-safety-and-foundations-no-visible-change)) | — |
 | CodePipeline `Portfolio-Deploy-Pipeline` (V2) | Was triggered by a push of `portfolio:latest` and deployed to killfood's production service. **Deleted 2026-10-04** | — |
 | EventBridge rule `codepipeline-portfo-latest-115244-rule` | **Deleted 2026-10-04** | — |
 | CodeStar connection `90022187-…` ("Portfolio Connection", GitHub) | **Deleted 2026-10-04**. The "AWS Connector for GitHub" app may still be installed on your GitHub account; remove it there if nothing else uses it | — |
@@ -106,7 +108,10 @@ QA is one shared environment, so it shows whichever branch was deployed last. Th
 
 ### Local Stack
 
-`docker/compose.yaml`, run with `docker compose -f docker/compose.yaml up -d`. It lives in `docker/` rather than at the root: a root `compose.yaml` would take precedence over the Laravel stack's `docker-compose.yml`. Run one stack at a time. It moves to the root at cutover (Phase 6).
+`compose.yaml` at the repo root, run with `docker compose up -d`.
+- **Before the cutover** it lived in `docker/`, because a root `compose.yaml` would have taken precedence over the Laravel stack's `docker-compose.yml`. It moved to the root on 2026-10-09.
+- **The project is still named `portfolio-rebuild`,** so it can't collide with the old Laravel stack's `portfolio` project.
+- **LocalStack reads its auth token** through `env_file: docker/.env`.
 
 Services:
 
@@ -129,9 +134,9 @@ A fresh `up` gives a working API at `http://localhost:3000/api/experiences`.
 Project commands run in the `api` container:
 
 ```bash
-docker compose -f docker/compose.yaml run --rm --no-deps api npm test          # unit tests, no AWS needed
-docker compose -f docker/compose.yaml up -d localstack mailhog
-docker compose -f docker/compose.yaml run --rm api npm run test:e2e            # against LocalStack and Mailhog
+docker compose run --rm --no-deps api npm test          # unit tests, no AWS needed
+docker compose up -d localstack mailhog
+docker compose run --rm api npm run test:e2e            # against LocalStack and Mailhog
 ```
 
 What isn't emulated: the Hobby plan doesn't include API Gateway HTTP APIs or CloudFront, which are only on LocalStack's higher paid tiers. Locally, Vite stands in for CloudFront, and Nest runs without the Lambda wrapper. The wrapper (`lambda.ts`) has a unit test, and QA exercises the full path for real.
@@ -620,7 +625,11 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - killfood's service was still ACTIVE, 1/1 on revision 401.
      - Its pipeline stages were still enabled.
      - Its notification rule, connection, and topics were untouched.
-   - **Kept: the `portfolio` ECR repo.** killfood's task definition revisions **363 and older** (registered 2026-04-24 or earlier) include `portfolio-app` as an essential container that pulls from this repo. Deleting it would break a rollback of killfood to April or earlier. Revisions 364–401 don't use it. Your call: deleting it saves up to $0.20/month, and the old images also carry the 2022 production `.env`.
+   - **Kept at first: the `portfolio` ECR repo.** killfood's task definition revisions **363 and older** (registered 2026-04-24 or earlier) include `portfolio-app` as an essential container that pulls from this repo, so deleting it breaks a rollback of killfood to April or earlier. Revisions 364–401 don't use it.
+   - ✅ **Deleted 2026-10-09, your call:**
+     - It held 3 images: `latest`, `temp`, and one untagged. The old images also carried the 2022 production `.env`.
+     - Before deleting, I checked that killfood's live service runs revision 401, and that none of its containers pull from `portfolio`.
+     - Afterward, the service was still ACTIVE with 1 of 1 tasks.
    - The old pipeline's artifacts in killfood's `killfood-deploy` bucket were left alone.
    - ✅ **Archived the orphaned state** and imported the zone and its four Mailgun records into `global/` (see [An Orphaned Terraform State](#an-orphaned-terraform-state)). The plan showed the records unchanged and only two new tags on the zone, and a re-plan shows no changes. Public DNS still returns the same Mailgun records.
 3. ✅ 2026-10-04: **Restructured `terraform/`** into `global/`, `modules/site/`, and `envs/{qa,prod}`. Nothing had been applied, so there was no state to move.
@@ -760,8 +769,13 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - `p=none` only publishes a policy; it never blocks or quarantines mail, including `contact@` forwarding.
      - Tighten it to `p=quarantine` once mail is known to align. Adding `rua=mailto:...` would send daily aggregate reports to check that against.
      - **Also worth doing in Mailgun:** the domain's DKIM key is 1024-bit, and 2048-bit is the current norm. Rotating it in Mailgun means updating the `krs._domainkey` record in `global/dns.tf`.
-   - **Production:** still on the 503 placeholder, and it waits for Phase 5 (your decision, 2026-10-04). Its first deploy comes from `master` through the workflow. Repeat the contact check there afterward.
-9. **Switch production's WAF managed rule sets from Count to Block.** First check their sampled requests and CloudWatch metrics for matches on legitimate contact-form posts; `CommonRuleSet`'s body-size rule is the usual false positive. Switch them in the CloudFront console (**Security** tab → **Enable blocking**) or the WAF console (turn off each rule set's "Override rule group action to Count").
+   - ✅ **Production:** deployed from `master` by GitHub Actions on 2026-10-09, and the contact check passed (see Phase 5, step 3).
+9. **Switch production's WAF managed rule sets from Count to Block.**
+   - **Evidence so far (2026-10-09):** no matches. Sampled requests over 3 hours showed no match on any rule, including three contact posts. That's only test traffic, though. Wait for real visitors after the cutover, then review again.
+   - **What to watch:** `CommonRuleSet` also blocks request bodies over 8 KB, and bodies that look like cross-site scripting. A visitor who pastes HTML or code into the message, or 5,000 characters of non-ASCII text, could be blocked. The form then shows its "couldn't be sent" message, which points to `contact@jakekillpack.com`.
+   - **How:**
+     - First check the sampled requests and CloudWatch metrics for matches on legitimate contact-form posts. `CommonRuleSet`'s body-size rule is the usual false positive.
+     - Then switch them in either console: CloudFront (**Security** tab → **Enable blocking**), or WAF (turn off each rule set's "Override rule group action to Count").
 
 ### Phase 4: React Frontend
 
@@ -864,7 +878,7 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - **The first evaluation posts one OK per alarm** to `#portfolio-logs`, because they move from `INSUFFICIENT_DATA` to `OK`. That happens once.
    - **Slack test:** `set-alarm-state` put `portfolio-prod-lambda-errors` into ALARM. It went back to OK at the next evaluation. Both state changes published to `portfolio-alerts`, and SNS shows 2 delivered and 0 failed.
    - **A real alarm, right away:** `portfolio-prod-api-5xx` fired once, caught by a check of production's `/api/experiences` minutes before the apply. Until production's first deploy, its API is the placeholder that answers 503, so any request to production's `/api/*` trips this alarm. It cleared by itself 5 minutes later, and all four are now OK.
-3. **First deploys through GitHub Actions** (yours):
+3. ✅ 2026-10-09: **First deploys through GitHub Actions** (yours):
    1. Add the variables above to both GitHub Environments (Settings → Environments).
    2. Push `rebuild` (CI runs) and merge it to `master`. That runs **Deploy Production**. The production site isn't public until its alias records are turned on (Phase 6), so a failed run affects nothing.
    3. Run **Deploy QA** from the Actions tab.
@@ -874,18 +888,58 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - **Worked:** the build job, the OIDC role assumption, the Lambda update, and the experiences write.
      - **Failed:** the step's own check. With `--query`, the AWS CLI prints nothing for an empty `UnprocessedItems`, and the check expected `{}`. The site, invalidation, and smoke test were skipped.
      - **Fix:** the step now checks the full response with `jq`. It was tested against LocalStack and against simulated responses with leftover items.
+   - ✅ **2026-10-09, both deploys succeeded:** Deploy Production on the merge of PR #45 (run 37874841081), and Deploy QA from `rebuild` (run 37875861037). You checked the production site through its CloudFront domain.
+   - ✅ **Review afterward:**
+     - **Edge checks:** QA passes 23 of 23. Production passes 19 of 19 through its CloudFront IP, with no public DNS yet.
+     - **Production routing:** `www` redirects to the apex, and production serves the build's `robots.txt` (`Disallow:` nothing).
+     - **Site buckets:** both hold only the current build; the placeholder is gone.
+     - **Logs and alarms:** neither Lambda logged an error, and all four alarms are OK.
+   - ✅ **Contact check on production**, through the CloudFront domain:
+     - `{}` got the 400 field errors.
+     - A honeypot submission got 200 but wasn't counted.
+     - A real message got 200. Mailgun accepted it with the production key (no errors logged), and the day's counter went to 1 with its expiry set.
 4. Once a production deploy has worked through GitHub Actions, finish the deferred CircleCI cleanup from Phase 0, step 1.
 
 ### Phase 6: Cutover and Cleanup
 
-1. Turn on production's alias records and apply. There's no A record today, so nothing is being replaced. Then change the `production` environment's `SITE_URL` to `https://jakekillpack.com`.
-2. Check every page, the contact form, and the old `/experience/{id}` URLs; run Lighthouse.
-3. Remove the Laravel app, `docker-config/`, `public/` media, `composer.*`, and `webpack.mix.js`. (`deploy/` and `.circleci/` were already removed on 2026-10-04.) Replace the stock Laravel `README.md`, and add a 3.0.0 entry to `docs/RELEASE.md`.
-4. Killfood follow-ups:
+1. ✅ 2026-10-09: **Cutover.**
+   - **The apply:** production's `create_alias_records` was turned on. The plan was exactly 4 alias records (A and AAAA for the apex and `www`), plus `NO_COLOR` on the function (below). A re-plan afterward shows no changes. There was no A record before, so nothing was replaced.
+   - **Public DNS:** Cloudflare's and Google's resolvers return the new records. The MX and SPF records for `contact@` are unchanged.
+   - **Edge checks:** all 20 pass over public DNS, and `www` redirects to the apex.
+   - **Negative caching:** the zone's SOA minimum TTL is 86,400 seconds. A resolver that looked up jakekillpack.com in the day before the cutover may keep answering "not found" until that runs out.
+   - **Still to do (yours):** change the `production` environment's `SITE_URL` to `https://jakekillpack.com`. The CloudFront domain keeps working for the smoke test until then.
+   - **Log colors:** `NO_COLOR=1` is set on both functions (`lambda.tf`), so Nest's log lines reach CloudWatch without terminal color codes. Checked on QA after its apply.
+2. ✅ 2026-10-09: **Checks on the live site.**
+   - **Parity:** the comparison against `https://jakekillpack.com` gave the same results as QA:
+     - all five `/experience/{id}` URLs and the back link match the Laravel site's text
+     - the home page differs only by the honeypot label
+     - pixel differences are 0.00–0.05%
+     - the contact form's 400 path works
+   - **Lighthouse 12.8** (`/` and `/experience/1`, mobile and desktop):
+     - Performance: 73 and 95 on the home page, 69 and 99 on the experience page.
+     - Best practices: 100.
+     - SEO: 91, for a missing meta description.
+     - Accessibility: 91 on the home page, 82 on the experience page.
+     - The accessibility and SEO findings were all on the Laravel site too: low-contrast white and light-blue text, heading order, links styled only by color, and no meta description. They belong to the restyle.
+   - **Fixed: a layout shift (CLS) of 1 on the experience page on mobile,** the worst score. Laravel rendered on the server, so it never had a loading state. The React page showed its Back link and footer while loading, and both moved when the content arrived. On phones the showcase also dropped 90 px when the title arrived, because the title's top margin collapses through it.
+     - **Now:** while loading, the page shows only the empty showcase with an empty, screen-reader-hidden title that keeps that margin.
+     - **Measured on a local production build:** CLS 0, with no layout-shift entries on three experience pages. The page looks identical once loaded.
+     - It goes live with the next production deploy.
+3. ✅ 2026-10-09: **Removed the Laravel app.**
+   - **Removed:** 155 files: `app/`, `bootstrap/`, `config/`, `database/`, `resources/`, `routes/`, `public/`, `storage/`, `tests/`, `docker-config/`, `artisan`, `composer.json`, `package.json`, `yarn.lock`, `webpack.mix.js`, `phpunit.xml`, `server.php`, and the old `.env.example`, `.env.pipelines`, `.snyk`, `.styleci.yml`, and `docs/TODO`. Every TODO item was done or no longer applied.
+   - **Stopped the Laravel stack's containers** first (`stop`, not `down`, so its database volume is still there).
+   - **Deleted Laravel's generated runtime files** under `bootstrap/` and `storage/`. Removing their `.gitignore` files would otherwise have left them untracked, including the cached config, which holds secrets.
+   - **Also changed:**
+     - `compose.yaml` moved to the root (see [Local Stack](#local-stack)).
+     - `README.md` replaced.
+     - `docs/RELEASE.md` has a 3.0.0 entry.
+     - `.gitignore` and `.editorconfig` trimmed to what the Node and Terraform stack uses (2-space indents).
+   - **Left for you** (ignored, local only): the old Laravel `.env`, `docker-compose.yml`, `composer.lock`, and `.phpunit.result.cache`. Once the stopped Laravel containers are removed (`docker compose -f docker-compose.yml down`), delete those files and the matching lines at the end of `.gitignore`.
+4. **Killfood follow-ups** (not yet; your call, 2026-10-09):
    - `docs/INFRASTRUCTURE.md` still lists `portfolio-app`, and `docs/MAINTENANCE.md` still lists the `/ecs/killfood/portfolio` log group; remove both.
-   - Remove the `personal-ecr-access` user from killfood's `iam.tf`, unless another project still pushes with it.
+   - Remove the `personal-ecr-access` user from killfood's `iam.tf`, unless another project still pushes with it. Its only known use was pushing portfolio images, and the `portfolio` repo is gone.
    - Give killfood its own Mailgun domain sending key, then revoke the old account key that was baked into the 2022 portfolio images.
-5. Update the `dev-environment` skill's portfolio row: Node stack, LocalStack, new services and ports.
+5. ✅ 2026-10-09: **Updated the `dev-environment` skill's portfolio row:** Node stack, LocalStack, new services and ports.
 
 ### After Cutover (Separate Projects)
 

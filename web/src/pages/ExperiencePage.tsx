@@ -21,6 +21,18 @@ export function ExperiencePage() {
   if (lookup.status === 'missing') {
     return <NotFoundPage />;
   }
+  // Only an empty showcase while loading. Anything shown earlier would move
+  // when the content arrives (the footer gets pushed down, and the Back link
+  // sits at a percentage of the page's height): a large layout shift. The
+  // empty title keeps the top margin the real title gives the showcase on
+  // phones (it collapses through), so the showcase doesn't drop either.
+  if (lookup.status === 'loading') {
+    return (
+      <div className="content showcase container-fluid position-relative">
+        <h2 className="main-title" aria-hidden="true"></h2>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -27,6 +27,9 @@ locals {
       MAIL_TO                       = var.contact_recipient
       MAILGUN_DOMAIN                = "jakekillpack.com"
       MAILGUN_SENDING_KEY_PARAMETER = "${local.ssm_parameter_prefix}/mailgun/sending-key"
+      # Nest's logger otherwise adds terminal color codes, which CloudWatch
+      # shows as raw escape sequences.
+      NO_COLOR = "1"
     },
     var.mail_subject_prefix == "" ? {} : { MAIL_SUBJECT_PREFIX = var.mail_subject_prefix },
   )
