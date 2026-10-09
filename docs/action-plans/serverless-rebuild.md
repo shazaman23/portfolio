@@ -760,8 +760,13 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - `p=none` only publishes a policy; it never blocks or quarantines mail, including `contact@` forwarding.
      - Tighten it to `p=quarantine` once mail is known to align. Adding `rua=mailto:...` would send daily aggregate reports to check that against.
      - **Also worth doing in Mailgun:** the domain's DKIM key is 1024-bit, and 2048-bit is the current norm. Rotating it in Mailgun means updating the `krs._domainkey` record in `global/dns.tf`.
-   - **Production:** still on the 503 placeholder, and it waits for Phase 5 (your decision, 2026-10-04). Its first deploy comes from `master` through the workflow. Repeat the contact check there afterward.
-9. **Switch production's WAF managed rule sets from Count to Block.** First check their sampled requests and CloudWatch metrics for matches on legitimate contact-form posts; `CommonRuleSet`'s body-size rule is the usual false positive. Switch them in the CloudFront console (**Security** tab → **Enable blocking**) or the WAF console (turn off each rule set's "Override rule group action to Count").
+   - ✅ **Production:** deployed from `master` by GitHub Actions on 2026-10-09, and the contact check passed (see Phase 5, step 3).
+9. **Switch production's WAF managed rule sets from Count to Block.**
+   - **Evidence so far (2026-10-09):** no matches. Sampled requests over 3 hours showed no match on any rule, including three contact posts. That's only test traffic, though. Wait for real visitors after the cutover, then review again.
+   - **What to watch:** `CommonRuleSet` also blocks request bodies over 8 KB, and bodies that look like cross-site scripting. A visitor who pastes HTML or code into the message, or 5,000 characters of non-ASCII text, could be blocked. The form then shows its "couldn't be sent" message, which points to `contact@jakekillpack.com`.
+   - **How:**
+     - First check the sampled requests and CloudWatch metrics for matches on legitimate contact-form posts. `CommonRuleSet`'s body-size rule is the usual false positive.
+     - Then switch them in either console: CloudFront (**Security** tab → **Enable blocking**), or WAF (turn off each rule set's "Override rule group action to Count").
 
 ### Phase 4: React Frontend
 
@@ -864,7 +869,7 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - **The first evaluation posts one OK per alarm** to `#portfolio-logs`, because they move from `INSUFFICIENT_DATA` to `OK`. That happens once.
    - **Slack test:** `set-alarm-state` put `portfolio-prod-lambda-errors` into ALARM. It went back to OK at the next evaluation. Both state changes published to `portfolio-alerts`, and SNS shows 2 delivered and 0 failed.
    - **A real alarm, right away:** `portfolio-prod-api-5xx` fired once, caught by a check of production's `/api/experiences` minutes before the apply. Until production's first deploy, its API is the placeholder that answers 503, so any request to production's `/api/*` trips this alarm. It cleared by itself 5 minutes later, and all four are now OK.
-3. **First deploys through GitHub Actions** (yours):
+3. ✅ 2026-10-09: **First deploys through GitHub Actions** (yours):
    1. Add the variables above to both GitHub Environments (Settings → Environments).
    2. Push `rebuild` (CI runs) and merge it to `master`. That runs **Deploy Production**. The production site isn't public until its alias records are turned on (Phase 6), so a failed run affects nothing.
    3. Run **Deploy QA** from the Actions tab.
@@ -874,6 +879,16 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - **Worked:** the build job, the OIDC role assumption, the Lambda update, and the experiences write.
      - **Failed:** the step's own check. With `--query`, the AWS CLI prints nothing for an empty `UnprocessedItems`, and the check expected `{}`. The site, invalidation, and smoke test were skipped.
      - **Fix:** the step now checks the full response with `jq`. It was tested against LocalStack and against simulated responses with leftover items.
+   - ✅ **2026-10-09, both deploys succeeded:** Deploy Production on the merge of PR #45 (run 37874841081), and Deploy QA from `rebuild` (run 37875861037). You checked the production site through its CloudFront domain.
+   - ✅ **Review afterward:**
+     - **Edge checks:** QA passes 23 of 23. Production passes 19 of 19 through its CloudFront IP, with no public DNS yet.
+     - **Production routing:** `www` redirects to the apex, and production serves the build's `robots.txt` (`Disallow:` nothing).
+     - **Site buckets:** both hold only the current build; the placeholder is gone.
+     - **Logs and alarms:** neither Lambda logged an error, and all four alarms are OK.
+   - ✅ **Contact check on production**, through the CloudFront domain:
+     - `{}` got the 400 field errors.
+     - A honeypot submission got 200 but wasn't counted.
+     - A real message got 200. Mailgun accepted it with the production key (no errors logged), and the day's counter went to 1 with its expiry set.
 4. Once a production deploy has worked through GitHub Actions, finish the deferred CircleCI cleanup from Phase 0, step 1.
 
 ### Phase 6: Cutover and Cleanup
