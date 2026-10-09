@@ -31,7 +31,7 @@ The old Laravel containers and files are gone. What's left is disk space:
   - ~~**Export first if you want it:** the database volumes hold the old local `new_portfolio` MySQL data. The same content lives in `content/experiences.json`.~~
   - ~~**Then:** `docker volume rm portfolio_db_data portfolio_dbdata portfolio_node_modules portfolio_vendor`~~
 - [x] ~~**Remove the old images,** about 2.4 GB: `docker image rm portfolio-app portfolio-pma portfolio-web`~~
-- [ ] **Remove `portfolio.test` from `/etc/hosts`.** The new stack runs at `http://localhost:5173`.
+- [x] ~~**Remove `portfolio.test` from `/etc/hosts`.** The new stack runs at `http://localhost:5173`.~~
 - [x] ~~**Delete the root `node_modules/`.** It holds only a stray Vite cache, and the apps keep their own `node_modules` in `api/` and `web/`.~~
 - [x] ~~**Optional: rename the Compose project.** Change `name: portfolio-rebuild` to `name: portfolio` in `compose.yaml`, now that the old `portfolio` project is gone.~~
   - ~~Run `docker compose -p portfolio-rebuild down` first, so the old containers don't linger under the old name.~~
@@ -56,21 +56,21 @@ Deferred on 2026-10-09. These change killfood, so do them in that repo with its 
 - [ ] **Rotate the DKIM key to 2048-bit.** The domain's key is 1024-bit. Rotate it in Mailgun, then update the `krs._domainkey` record in `terraform/global/dns.tf`.
 - [ ] **Remove the diamondsdesk domain from Mailgun** if that project is gone for good. ([Resolved](serverless-rebuild.md#resolved))
 
-## Deploy Hardening (Optional)
+## ~~Deploy Hardening (Optional)~~
 
-None of these are needed: today only you can push, and production deploys only from `master`.
+~~None of these are needed: today only you can push, and production deploys only from `master`.~~
 
-- [ ] **Require a reviewer on the `production` environment.** Each production deploy then waits for your click after its build passes. The cost is that merges no longer deploy on their own.
-- [ ] **Add a ruleset on `master`** that requires pull requests and passing CI. It mostly guards against accidental pushes.
-- [ ] **Narrow the production role's OIDC trust.**
-  1. Customize the repo's OIDC subject template to include `ref` (or `job_workflow_ref`).
-  2. Require `master` (or `deploy.yml` on `master`) in the production role's trust policy, in `terraform/modules/site/iam.tf`.
-  - ([IAM Roles](serverless-rebuild.md#iam-roles))
+- [x] ~~**Require a reviewer on the `production` environment.** Each production deploy then waits for your click after its build passes. The cost is that merges no longer deploy on their own.~~
+- [x] ~~**Add a ruleset on `master`** that requires pull requests and passing CI. It mostly guards against accidental pushes.~~
+- [x] ~~**Narrow the production role's OIDC trust.**~~
+  ~~1. Customize the repo's OIDC subject template to include `ref` (or `job_workflow_ref`).~~
+  ~~2. Require `master` (or `deploy.yml` on `master`) in the production role's trust policy, in `terraform/modules/site/iam.tf`.~~
+  ~~- ([IAM Roles](serverless-rebuild.md#iam-roles))~~
 
 ## Small Code Cleanups (Optional)
 
-- [ ] **Drop `vite-tsconfig-paths` from the API.** Its Vitest run warns that Vite now resolves tsconfig paths itself. Set `resolve.tsconfigPaths: true` in `api/vitest.config.ts` and `api/vitest.config.e2e.ts`, then remove the plugin.
-- [ ] **Optional: backfill the `Project` and `Environment` cost tags** for up to 12 earlier months (Billing → Cost allocation tags → **Backfill tags**). ([Tracking Portfolio Costs Separately](serverless-rebuild.md#tracking-portfolio-costs-separately))
+- [x] ~~**Drop `vite-tsconfig-paths` from the API.** Its Vitest run warns that Vite now resolves tsconfig paths itself. Set `resolve.tsconfigPaths: true` in `api/vitest.config.ts` and `api/vitest.config.e2e.ts`, then remove the plugin.~~
+- [x] ~~**Optional: backfill the `Project` and `Environment` cost tags** for up to 12 earlier months (Billing → Cost allocation tags → **Backfill tags**). ([Tracking Portfolio Costs Separately](serverless-rebuild.md#tracking-portfolio-costs-separately))~~
 
 ## Restyle and Content (Separate Projects)
 

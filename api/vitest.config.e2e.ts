@@ -1,10 +1,11 @@
 import { defineConfig } from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 // End-to-end tests against LocalStack and Mailhog; see test/support.ts for how
 // to run them.
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     globals: true,
     root: './',
