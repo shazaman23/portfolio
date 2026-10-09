@@ -869,6 +869,11 @@ Each phase builds QA first, checks it, then applies the same change to productio
    2. Push `rebuild` (CI runs) and merge it to `master`. That runs **Deploy Production**. The production site isn't public until its alias records are turned on (Phase 6), so a failed run affects nothing.
    3. Run **Deploy QA** from the Actions tab.
    4. Repeat the Phase 3 contact check on production (through the CloudFront domain).
+   - **2026-10-09, first push:** CI failed because `api/src/secrets/` had never been committed. The bare `secrets/` rule in `.gitignore`, added for your key files in Phase 3, matched it. The rule is now `/secrets/`, and CI passes from a fresh clone.
+   - **2026-10-09, first Deploy Production** (run 37873191294, on the merge of PR #44):
+     - **Worked:** the build job, the OIDC role assumption, the Lambda update, and the experiences write.
+     - **Failed:** the step's own check. With `--query`, the AWS CLI prints nothing for an empty `UnprocessedItems`, and the check expected `{}`. The site, invalidation, and smoke test were skipped.
+     - **Fix:** the step now checks the full response with `jq`. It was tested against LocalStack and against simulated responses with leftover items.
 4. Once a production deploy has worked through GitHub Actions, finish the deferred CircleCI cleanup from Phase 0, step 1.
 
 ### Phase 6: Cutover and Cleanup
