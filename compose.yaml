@@ -4,10 +4,7 @@
 #
 #   cp docker/.env.example docker/.env      # then add your LocalStack auth token
 #   docker compose up -d
-#
-# The project keeps the name it had during the rebuild, so it can't collide
-# with the old Laravel stack's "portfolio" project if that still exists.
-name: portfolio-rebuild
+name: portfolio
 
 services:
   # DynamoDB, S3, and SSM. The ready.d hook creates the table, the assets

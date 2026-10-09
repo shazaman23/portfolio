@@ -2,7 +2,7 @@
 
 Status: **live since 2026-10-09** (cutover, Phase 6) · Written 2026-10-03 · Updated 2026-10-09
 
-Still open: the killfood follow-ups (Phase 6, step 4), the CircleCI cleanup (Phase 5, step 4), and switching the WAF managed rules to Block (Phase 3, step 9).
+Still open: everything left, including the killfood follow-ups, the CircleCI cleanup, the WAF switch to Block, and the optional extras, is collected in [rebuild-cleanup.md](rebuild-cleanup.md).
 
 Rebuild jakekillpack.com as-is (same pages, look, and behavior) as a React single-page app on S3 + CloudFront, with a NestJS API on Lambda, images on S3, a QA environment at `qa.jakekillpack.com`, and its own Terraform and IAM roles, patterned after killfood.
 
@@ -61,7 +61,7 @@ What this means:
 
 `.circleci/config.yml` runs `aws-deploy` on every merge to master. That job:
 
-1. Builds `docker-config/pma/pma.Dockerfile` and pushes it as **`killfood-pma:latest`** on Docker Hub, the phpMyAdmin image killfood's production task pulls.
+1. Builds and pushes a container image that killfood's production stack uses.
 2. Pushes `portfolio:latest` to ECR, which starts `Portfolio-Deploy-Pipeline` against killfood's production ECS service. With no `portfolio-app` container left in killfood's task definition, that deploy should fail rather than change anything, but it still runs against production.
 
 The last master merge (2022-10-16) lines up with the last ECR push, so CircleCI was active then. The CircleCI project is still registered to the `shazaman23` org (its public API returned the project on 2026-10-04), but whether it's actively building can't be seen without logging in.
@@ -70,10 +70,10 @@ The last master merge (2022-10-16) lines up with the last ECR push, so CircleCI 
 
 | Guard | Where | Undo |
 |-------|-------|------|
-| Deleted `.circleci/config.yml` and `deploy/imagedefinitions.json` | Branch `refresh-local-add-terraform-and-small-cleanups`. Takes effect on master when that branch merges: CircleCI finds no config in the merge commit, so no job runs. This is the only guard against the Docker Hub `killfood-pma` overwrite. | Restore the files from git history |
+| Deleted `.circleci/config.yml` and `deploy/imagedefinitions.json` | Branch `refresh-local-add-terraform-and-small-cleanups`. Takes effect on master when that branch merges: CircleCI finds no config in the merge commit, so no job runs. This is the only guard against that image being overwritten. | Restore the files from git history |
 | Deleted the old pipeline, its EventBridge trigger, roles, and connection | AWS, 2026-10-04 (Phase 0, step 2). An ECR push of `portfolio:latest` can no longer reach killfood's ECS service. They were first disabled (rule and Deploy transition) earlier the same day, then deleted. | Not reversible; nothing left to re-enable |
 
-Still open by choice: the CircleCI project and its environment variables stay in place until the GitHub Actions replacement works (Phase 5). Those variables hold Docker Hub credentials that can push `killfood-pma`, ECR keys, and the old production secrets, so they get cleared then. Until Phase 5, nothing runs the test suite automatically; run it locally (see [Changes to the Current Site](#changes-to-the-current-site)).
+Still open by choice: the CircleCI project and its environment variables stay in place until the GitHub Actions replacement works (Phase 5). Those variables hold credentials that can push that image, plus old keys and secrets, so they get cleared then. Until Phase 5, nothing runs the test suite automatically; run it locally (see [Changes to the Current Site](#changes-to-the-current-site)).
 
 ### Goal
 
@@ -110,7 +110,7 @@ QA is one shared environment, so it shows whichever branch was deployed last. Th
 
 `compose.yaml` at the repo root, run with `docker compose up -d`.
 - **Before the cutover** it lived in `docker/`, because a root `compose.yaml` would have taken precedence over the Laravel stack's `docker-compose.yml`. It moved to the root on 2026-10-09.
-- **The project is still named `portfolio-rebuild`,** so it can't collide with the old Laravel stack's `portfolio` project.
+- **Project name:** `portfolio-rebuild` until the old Laravel stack's `portfolio` project was removed. It was renamed `portfolio` on 2026-10-09, so containers are named like `portfolio-api-1`.
 - **LocalStack reads its auth token** through `env_file: docker/.env`.
 
 Services:
@@ -303,7 +303,7 @@ terraform/
 | `modules/site/apigateway.tf` | HTTP API, `$default` and `POST /api/contact` routes → Lambda, throttles (5/s burst 10; contact 1/s burst 2) (✅ 2026-10-04) | 3 |
 | `modules/site/alarms.tf` | CloudWatch alarms → `portfolio-alerts` (production only) (✅ 2026-10-06) | 5 |
 
-The zone and its four Mailgun records already exist, so they're imported rather than created: `terraform import aws_route53_zone.main Z05239741F47L70Y5ONQR`, plus one import per record. The plan must then show no changes to them.
+The zone and its four Mailgun records already exist, so they're imported rather than created: `import` blocks in `global/dns.tf`, one for the zone and one per record, removed once applied. The plan had to show no changes to them.
 
 The production stack can be built before launch with its alias records switched off. Turning them on at cutover is what makes the site live.
 
@@ -345,13 +345,13 @@ CLI profiles to add to `~/.aws/config` after apply:
 
 ```ini
 [profile portfolio-assets-qa]
-role_arn = arn:aws:iam::412430435138:role/portfolio-assets-publisher-qa
+role_arn = arn:aws:iam::<account-id>:role/portfolio-assets-publisher-qa
 source_profile = killfood
 role_session_name = portfolio-assets
 region = us-west-2
 
 [profile portfolio-assets-prod]
-role_arn = arn:aws:iam::412430435138:role/portfolio-assets-publisher-prod
+role_arn = arn:aws:iam::<account-id>:role/portfolio-assets-publisher-prod
 source_profile = killfood
 role_session_name = portfolio-assets
 region = us-west-2
@@ -474,7 +474,7 @@ The 4 production alarms plus killfood's 2 use 6 of the 10 free CloudWatch alarms
 
 ### Where Alerts Go
 
-Alerts go to Slack in `#portfolio-logs` (`C0B27NY5NP2`) in the "KillFood Dev" workspace (decided 2026-10-04). It's the same path killfood's backup alarms use to reach `#deployment-announce`:
+Alerts go to Slack in `#portfolio-logs` in the "KillFood Dev" workspace (decided 2026-10-04). It's the same path killfood's backup alarms use to reach `#deployment-announce`:
 
 ```
 CloudWatch alarms ─┐
@@ -492,7 +492,7 @@ AWS Budget ────────┘                           (formerly AWS C
 - **killfood's wiring is untouched.** Its `deploy-announce` configuration still posts deploys and backup alarms to `#deployment-announce`.
 - **Notifications-only permissions.** The configuration's role (`portfolio-chatbot-alerts`) can only read CloudWatch, which lets alarm posts include their graphs. The channel guardrail is that same read-only policy, so nobody can run AWS commands from Slack through it.
 - **Topic access policy.** It lets `cloudwatch.amazonaws.com` and `budgets.amazonaws.com` publish, limited to this account. The topic stays unencrypted, like killfood's, because an encrypted topic would need extra key permissions for both services.
-- **Slack IDs** are in `global/terraform.tfvars`: `slack_team_id = "T8RTXLMSA"` and `slack_channel_id = "C0B27NY5NP2"`.
+- **Slack IDs** (`slack_team_id` and `slack_channel_id`) are in the gitignored `global/terraform.tfvars`.
 - **Still email:** only the CloudFront plan's usage emails, which AWS sends to the account's email address.
 
 ### If an Alert Fires
@@ -592,7 +592,7 @@ Every resource the Terraform creates is tagged `Project=portfolio`, plus `Manage
 
 Gaps to know about:
 
-- The old `portfolio` ECR repo is already tagged `Project=portfolio`, so about $0.20/month of old images shows under the portfolio until the repo is deleted (Phase 0).
+- The old `portfolio` ECR repo was tagged `Project=portfolio`, so about $0.20/month of old images showed under the portfolio until the repo was deleted on 2026-10-09.
 - killfood's EC2 instance and EBS volume have no `Project` tag, because they're outside Terraform. So about $20/month of killfood will show as untagged. Tag the volume, and tag the instance through its launch template so a replacement inherits the tag.
 - Anything created outside Terraform needs tags by hand, such as the `--tags` in [Adding a Secret](#adding-a-secret).
 - Some charges never carry tags, such as tax.
@@ -627,10 +627,10 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - Its notification rule, connection, and topics were untouched.
    - **Kept at first: the `portfolio` ECR repo.** killfood's task definition revisions **363 and older** (registered 2026-04-24 or earlier) include `portfolio-app` as an essential container that pulls from this repo, so deleting it breaks a rollback of killfood to April or earlier. Revisions 364–401 don't use it.
    - ✅ **Deleted 2026-10-09, your call:**
-     - It held 3 images: `latest`, `temp`, and one untagged. The old images also carried the 2022 production `.env`.
+     - It held 3 images: `latest`, `temp`, and one untagged. Deleting them also removed old configuration that was built into them.
      - Before deleting, I checked that killfood's live service runs revision 401, and that none of its containers pull from `portfolio`.
      - Afterward, the service was still ACTIVE with 1 of 1 tasks.
-   - The old pipeline's artifacts in killfood's `killfood-deploy` bucket were left alone.
+   - The old pipeline's artifacts in killfood's `killfood-deploy` bucket were left alone. A listing on 2026-10-09 found no portfolio prefix there, so there's nothing to clean up.
    - ✅ **Archived the orphaned state** and imported the zone and its four Mailgun records into `global/` (see [An Orphaned Terraform State](#an-orphaned-terraform-state)). The plan showed the records unchanged and only two new tags on the zone, and a re-plan shows no changes. Public DNS still returns the same Mailgun records.
 3. ✅ 2026-10-04: **Restructured `terraform/`** into `global/`, `modules/site/`, and `envs/{qa,prod}`. Nothing had been applied, so there was no state to move.
    - Role names gain the environment suffix.
@@ -667,7 +667,7 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - The Free plan allows only AWS-managed cache and headers policies (see [Conventions](#conventions-kept-from-killfood)). So the distribution uses `Managed-CachingOptimized` and `Managed-SecurityHeadersPolicy`, and QA's `noindex` header comes from a viewer-response function.
    - Both buckets share one OAC. Their policies allow only their own environment's distribution, and they include `s3:ListBucket` so a missing file returns 404 instead of 403.
    - The function tests (13) pass in Node. The deployed functions also gave the right results in CloudFront's own runtime (`aws cloudfront test-function`).
-2. ✅ 2026-10-04: **Applied QA** (17 added). Distribution `E3GE43H7XZORDY` serves `qa.jakekillpack.com`, with a placeholder `index.html` uploaded. All 18 checks passed:
+2. ✅ 2026-10-04: **Applied QA** (17 added). QA's distribution serves `qa.jakekillpack.com`, with a placeholder `index.html` uploaded. All 18 checks passed:
    - DNS A and AAAA records exist.
    - `/` and `/experience/1` return the placeholder, and `/assets/img/about/popcorn.webp` returns `image/webp` with its `Cache-Control`.
    - HSTS (without `includeSubDomains`), `nosniff`, and `X-Frame-Options` are present. HTTP redirects to HTTPS.
@@ -678,12 +678,12 @@ Each phase builds QA first, checks it, then applies the same change to productio
    - If AWS won't accept a second plan under the same apex, QA stays on pay-as-you-go. That's still about $0, because the always-free tier covers 1 TB and 10M requests, but there's no WAF.
    - A Free plan uses one of the account's three slots, and the limit can't be raised. A Free plan cancels immediately, so a slot can be freed later if killfood needs one.
 4. ✅ 2026-10-04: **Applied production** (15 added), with its alias records off.
-   - Distribution `E1CXGUELSCL11M` (`d248ehj2knjkmm.cloudfront.net`) serves `jakekillpack.com` and `www`.
+   - Production's distribution serves `jakekillpack.com` and `www`.
    - Checked through the distribution's IP with the real hostnames, since there are no DNS records yet. All 14 checks passed, with no `X-Robots-Tag`.
    - `https://www.jakekillpack.com/experience/1?utm_source=test` returns 301 to the apex with the path and query intact.
    - The zone gained only the certificate validation records; the Mailgun records are unchanged. `jakekillpack.com` still doesn't resolve.
 5. ✅ 2026-10-04: **Subscribed production to the flat-rate Free plan** (you, in the console).
-   - **Subscription:** created web ACL `CreatedByCloudFront-37de771b` (us-east-1, CloudFront scope) and attached it to `E1CXGUELSCL11M`.
+   - **Subscription:** created a `CreatedByCloudFront-…` web ACL (us-east-1, CloudFront scope) and attached it to production's distribution.
    - **Hosted zone:** the plan's **Manage plan** section shows the `jakekillpack.com` zone already attached.
    - **Don't use "Route domains to CloudFront":** it creates the apex and `www` alias records outside Terraform. That would put the site live early and make the Phase 6 apply fail on records that already exist.
    - **Rate limit:** you added `Burst-Rate-Limit` in the WAF console: 300 requests per 5 minutes per source IP, action Block, priority 0, with CloudWatch metrics and request sampling on.
@@ -865,9 +865,11 @@ Each phase builds QA first, checks it, then applies the same change to productio
 
      | Variable | `qa` | `production` |
      |----------|------|--------------|
-     | `AWS_DEPLOY_ROLE_ARN` | `arn:aws:iam::412430435138:role/portfolio-github-deploy-qa` | `arn:aws:iam::412430435138:role/portfolio-github-deploy-prod` |
-     | `CLOUDFRONT_DISTRIBUTION_ID` | `E3GE43H7XZORDY` | `E1CXGUELSCL11M` |
-     | `SITE_URL` | `https://qa.jakekillpack.com` | `https://d248ehj2knjkmm.cloudfront.net` until the cutover, then `https://jakekillpack.com` |
+     | `AWS_DEPLOY_ROLE_ARN` | the `github_deploy_role_arn` output of `envs/qa` | the `github_deploy_role_arn` output of `envs/prod` |
+     | `CLOUDFRONT_DISTRIBUTION_ID` | the `distribution_id` output of `envs/qa` | the `distribution_id` output of `envs/prod` |
+     | `SITE_URL` | `https://qa.jakekillpack.com` | `https://` plus the `distribution_domain_name` output until the cutover, then `https://jakekillpack.com` |
+
+     Read the outputs with `terraform -chdir=terraform/envs/<qa|prod> output`.
 
      A deploy stops at its first step with an error naming any variable that's missing.
 2. ✅ 2026-10-06: **Alarms.** `modules/site/alarms.tf` creates the four alarms from [Alerts (Production)](#alerts-production) when the environment passes `alarm_topic_arn`. Production passes the `portfolio-alerts` topic; QA passes nothing.
@@ -934,11 +936,11 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - `README.md` replaced.
      - `docs/RELEASE.md` has a 3.0.0 entry.
      - `.gitignore` and `.editorconfig` trimmed to what the Node and Terraform stack uses (2-space indents).
-   - **Left for you** (ignored, local only): the old Laravel `.env`, `docker-compose.yml`, `composer.lock`, and `.phpunit.result.cache`. Once the stopped Laravel containers are removed (`docker compose -f docker-compose.yml down`), delete those files and the matching lines at the end of `.gitignore`.
+   - **Left for you** (ignored, local only): the old Laravel `.env`, `docker-compose.yml`, `composer.lock`, and `.phpunit.result.cache`. ✅ You removed the containers, deleted the files, and dropped their `.gitignore` lines on 2026-10-09 (`ac53bca`). The old volumes and images are still on disk; see [rebuild-cleanup.md](rebuild-cleanup.md).
 4. **Killfood follow-ups** (not yet; your call, 2026-10-09):
    - `docs/INFRASTRUCTURE.md` still lists `portfolio-app`, and `docs/MAINTENANCE.md` still lists the `/ecs/killfood/portfolio` log group; remove both.
    - Remove the `personal-ecr-access` user from killfood's `iam.tf`, unless another project still pushes with it. Its only known use was pushing portfolio images, and the `portfolio` repo is gone.
-   - Give killfood its own Mailgun domain sending key, then revoke the old account key that was baked into the 2022 portfolio images.
+   - Give killfood its own Mailgun domain sending key, then revoke the old Mailgun account key.
 5. ✅ 2026-10-09: **Updated the `dev-environment` skill's portfolio row:** Node stack, LocalStack, new services and ports.
 
 ### After Cutover (Separate Projects)
@@ -958,7 +960,7 @@ None right now.
 - **DynamoDB** for the experiences (2026-10-04).
 - **Parity first** (2026-10-04). The Tailwind restyle and the content refresh come after cutover.
 - **Mailgun** is one account shared by killfood, the portfolio, and formerly diamondsdesk (2026-10-04). As a result:
-  - The key baked into the 2022 portfolio images is most likely that account's API key, which killfood probably still uses. Revoke it only after killfood moves to its own domain sending key (Phase 6).
+  - An older account-level key from the Laravel era may still be in use by killfood. Revoke it only after killfood moves to its own domain sending key (see [rebuild-cleanup.md](rebuild-cleanup.md)).
   - The portfolio uses domain sending keys scoped to `jakekillpack.com`, one per environment, so nothing else depends on them.
   - The send quota is shared across domains. The daily send cap keeps the portfolio from using it up.
   - If diamondsdesk is gone for good, its domain can be removed from Mailgun.
