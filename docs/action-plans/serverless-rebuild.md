@@ -830,14 +830,21 @@ Each phase builds QA first, checks it, then applies the same change to productio
      - **Web:** lint, Prettier, unit tests, and a type-checked build
      - **Terraform:** `fmt -check`, `validate` for each root (no backend, no credentials), and the CloudFront Functions tests
      - The API's end-to-end tests need LocalStack and Mailhog, so they stay local.
-   - **`deploy.yml`:** a reusable workflow (`workflow_call`) with an `environment` input. It runs in that GitHub Environment, one deploy per environment at a time, and:
-     1. tests and builds both apps before any AWS credentials exist
-     2. assumes `portfolio-github-deploy-<env>` through OIDC
-     3. updates the Lambda code, then waits with `aws lambda wait function-updated-v2`. The API goes first, so a new site never calls an old API.
-     4. upserts `content/experiences.json` into the environment's table (`node dist/seed.js`)
-     5. publishes the site in order: `static/` (`immutable`), `robots.txt`, `index.html` (`no-cache`), then deletes files from older builds
-     6. invalidates `/index.html` and `/api/*`, and waits for the invalidation to finish
-     7. **smoke test:** `SITE_URL` must serve this build's script and the right number of experiences
+   - **`deploy.yml`:** a reusable workflow (`workflow_call`) with an `environment` input. It has two jobs, each on its own fresh runner.
+     - **`build`** has no AWS access. It installs the npm packages, runs both test suites, and builds:
+       - the Lambda zip
+       - the experiences as a `BatchWriteItem` request (`seed.js --request-file`)
+       - the site
+
+       It uploads all three as an artifact.
+     - **`deploy`** runs in the GitHub Environment, one deploy per environment at a time. It never checks out the repo or runs anything from npm. It:
+       1. downloads the artifact and assumes `portfolio-github-deploy-<env>` through OIDC
+       2. updates the Lambda code, then waits with `aws lambda wait function-updated-v2`. The API goes first, so a new site never calls an old API.
+       3. upserts the experiences with `aws dynamodb batch-write-item`, and fails if any are left unprocessed
+       4. publishes the site in order: `static/` (`immutable`), `robots.txt`, `index.html` (`no-cache`), then deletes files from older builds
+       5. invalidates `/index.html` and `/api/*`, and waits for the invalidation to finish
+       6. **smoke test:** `SITE_URL` must serve this build's script and the right number of experiences
+     - **Why two jobs:** the AWS credentials only ever exist on a runner whose only code is the AWS CLI and two pinned GitHub and AWS actions. A compromised npm package can't reach them. It could still change what gets built, which only reviewing dependency updates catches.
    - **`deploy-qa.yml`:** `workflow_dispatch` only. Pick any branch in the Actions UI, and it runs `deploy.yml` with `qa`. GitHub only lists it once the file is on `master`.
    - **`deploy-prod.yml`:** runs on push to `master`, and can be rerun from the Actions tab. Runs `deploy.yml` with `production`, whose branch rule still allows only `master`.
    - **Bucket, function, and table names** come from the environment's short name (`qa`, `prod`). The deploy role can't look the distribution up, so it and two other values are GitHub Environment variables:
