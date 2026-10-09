@@ -1,0 +1,177 @@
+# Tests, builds, and deploys one environment. Called by deploy-qa.yml and
+# deploy-prod.yml; see "Steps, Phase 5" in docs/action-plans/serverless-rebuild.md.
+#
+# Two jobs, on two separate runners:
+#   build   installs the npm packages, tests, and builds, with no AWS access.
+#           Its output (the Lambda zip, the experiences as DynamoDB writes,
+#           and the site) is uploaded as an artifact.
+#   deploy  runs in the matching GitHub Environment, and only a job there can
+#           assume that environment's deploy role (OIDC, no stored keys). It
+#           runs the AWS CLI on the build's output and nothing from npm, so the
+#           credentials never share a machine with third-party package code.
+# The environment's branch rule decides what may deploy: production takes
+# master only, qa takes any branch.
+#
+# Each GitHub Environment needs these variables (Settings > Environments):
+#   AWS_DEPLOY_ROLE_ARN         the env root's github_deploy_role_arn output
+#   CLOUDFRONT_DISTRIBUTION_ID  the env root's distribution_id output
+#   SITE_URL                    where to smoke-test the deploy; production uses
+#                               its CloudFront domain until the cutover
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment to deploy to (qa or production)
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  # AWS resource names end in the environment's short name.
+  ENV: ${{ inputs.environment == 'production' && 'prod' || inputs.environment }}
+
+jobs:
+  build:
+    name: Build for ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            api/package-lock.json
+            web/package-lock.json
+
+      - name: Install
+        run: |
+          npm ci --prefix api
+          npm ci --prefix web
+      - name: Test
+        run: |
+          npm test --prefix api
+          npm test --prefix web
+      # The Lambda zip, plus content/experiences.json (validated) as the
+      # BatchWriteItem request the deploy job sends with the AWS CLI.
+      - name: Build the API
+        working-directory: api
+        run: |
+          npm run bundle
+          (cd build/lambda && zip -q -9 ../lambda.zip index.mjs index.mjs.map)
+          TABLE_NAME="portfolio-experiences-$ENV" node dist/seed.js --request-file build/seed-request.json
+      - name: Build the site
+        run: npm run build --prefix web
+
+      - name: Gather the release
+        run: |
+          mkdir release
+          cp api/build/lambda.zip api/build/seed-request.json release/
+          cp -R web/dist release/site
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.SITE_URL }}
+    # Only what OIDC needs. The job never checks out the repo; downloading
+    # this run's artifact doesn't need the token.
+    permissions:
+      id-token: write
+    # One deploy per environment at a time; a newer one waits its turn.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - name: Check the environment's variables
+        env:
+          ROLE: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          missing=()
+          [[ -n $ROLE ]] || missing+=(AWS_DEPLOY_ROLE_ARN)
+          [[ -n $DISTRIBUTION_ID ]] || missing+=(CLOUDFRONT_DISTRIBUTION_ID)
+          [[ -n $SITE_URL ]] || missing+=(SITE_URL)
+          if (( ${#missing[@]} )); then
+            echo "::error::Set ${missing[*]} on the ${{ inputs.environment }} environment (see the top of deploy.yml)"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: release
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: portfolio-deploy-${{ github.run_id }}
+          aws-region: us-west-2
+
+      # The API goes first, so a new site never calls an old API.
+      - name: Update the API
+        run: |
+          aws lambda update-function-code --function-name "portfolio-api-$ENV" \
+            --zip-file fileb://release/lambda.zip --query CodeSha256 --output text
+          aws lambda wait function-updated-v2 --function-name "portfolio-api-$ENV"
+
+      # Upserts the experiences; it never deletes (see api/src/seed.ts).
+      - name: Load the experiences
+        run: |
+          unprocessed=$(aws dynamodb batch-write-item --request-items file://release/seed-request.json \
+            --query UnprocessedItems --output json)
+          if [[ $unprocessed != '{}' && $unprocessed != null ]]; then
+            echo "::error::DynamoDB didn't write every experience; rerun the deploy"
+            exit 1
+          fi
+
+      # Fingerprinted files first, then index.html, so the live page never
+      # points at files that aren't uploaded yet. Files from older builds are
+      # removed last.
+      - name: Publish the site
+        run: |
+          bucket="s3://jakekillpack-site-$ENV"
+          static=(--cache-control 'public, max-age=31536000, immutable' --no-progress)
+          aws s3 sync release/site/static "$bucket/static" "${static[@]}"
+          aws s3 cp release/site/robots.txt "$bucket/robots.txt" --cache-control 'public, max-age=3600'
+          aws s3 cp release/site/index.html "$bucket/index.html" --cache-control 'no-cache'
+          aws s3 sync release/site/static "$bucket/static" "${static[@]}" --delete
+
+      # Every page path is served from /index.html.
+      - name: Invalidate CloudFront
+        run: |
+          id=$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" \
+            --paths '/index.html' '/api/*' --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION_ID" --id "$id"
+
+      - name: Smoke test
+        run: |
+          script=$(grep -o '/static/index-[^"]*\.js' release/site/index.html)
+          if ! curl -fsS --retry 3 "$SITE_URL/" | grep -qF "$script"; then
+            echo "::error::$SITE_URL/ isn't serving this build ($script)"
+            exit 1
+          fi
+          want=$(jq '[.[]][0] | length' release/seed-request.json)
+          got=$(curl -fsS --retry 3 "$SITE_URL/api/experiences" | jq length)
+          if [[ $got != "$want" ]]; then
+            echo "::error::$SITE_URL/api/experiences returned $got experiences, expected $want"
+            exit 1
+          fi
+          echo "$SITE_URL serves $script and $got experiences"

@@ -29,7 +29,9 @@ class ViewerContact extends Mailable
      */
     public function build()
     {
-        return $this->from($this->request->email, $this->request->name)
+        // Send as the site's own address so SPF/DMARC pass; replies go to the visitor.
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+                    ->replyTo($this->request->email, $this->request->name)
                     ->subject("Viewer Contact - " . $this->request->name)
                     ->markdown('emails.viewerContact')
                     ->with([
