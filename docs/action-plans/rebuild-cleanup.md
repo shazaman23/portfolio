@@ -76,10 +76,11 @@ Deferred on 2026-10-09. These change killfood, so do them in that repo with its 
 
 Planned after the cutover, not part of the rebuild. ([After Cutover](serverless-rebuild.md#after-cutover-separate-projects))
 
-- [ ] **Restyle with Tailwind.** Fold in what Lighthouse found on 2026-10-09; all of it was carried over from the Laravel design:
-  - **Low contrast:** white and light-blue (`#61cdf5`) text on light backgrounds, including the Back link, the experience titles, and the footer links.
-  - **Heading order:** headings skip levels, for example `h2` straight to `h4`.
-  - **Links:** links in body text are told apart by color alone.
-  - **No meta description:** this costs some SEO score.
-  - **Mouse only:** the About Me strips open only with a mouse; they can't be reached with the keyboard.
+- [x] ~~**Restyle with Tailwind.** Fold in what Lighthouse found on 2026-10-09; all of it was carried over from the Laravel design:~~
+  - ~~**Low contrast:** white and light-blue (`#61cdf5`) text on light backgrounds, including the Back link, the experience titles, and the footer links.~~
+  - ~~**Heading order:** headings skip levels, for example `h2` straight to `h4`.~~
+  - ~~**Links:** links in body text are told apart by color alone.~~
+  - ~~**No meta description:** this costs some SEO score.~~
+  - ~~**Mouse only:** the About Me strips open only with a mouse; they can't be reached with the keyboard.~~
+- [ ] **Add a dark mode in the developer style** pitched while planning the restyle: dark slate with the light blue (`#61cdf5`) as the accent, and monospace touches. It follows the system setting. The 3.1.0 colors are Tailwind theme tokens in `web/src/index.css`, which leaves room for it.
 - [ ] **Refresh the experiences and other content.** That includes the page title, which is still `Portfolio`, the old Laravel `APP_NAME`. It's one line in `web/index.html`.

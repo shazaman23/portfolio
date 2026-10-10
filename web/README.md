@@ -1,10 +1,10 @@
 # Portfolio Frontend
 
-The React single-page app for jakekillpack.com, built with Vite and served from S3 through CloudFront. It's a straight port of the Laravel site's pages, styles, and behavior. See `docs/action-plans/serverless-rebuild.md` for the architecture.
+The React single-page app for jakekillpack.com, built with Vite and served from S3 through CloudFront. It started as a straight port of the Laravel site and was restyled with Tailwind in 3.1.0. See `docs/action-plans/serverless-rebuild.md` for the architecture.
 
 | Path | Page |
 |------|------|
-| `/` | Home: banner, About Me, My Work, Contact Me |
+| `/` | Home: hero, My Work, About Me, Contact Me |
 | `/experience/:id` | One experience, from `GET /api/experiences/:id` |
 | anything else | 404 page, tagged `noindex` (CloudFront still answers 200) |
 
@@ -24,16 +24,18 @@ The dev server stands in for CloudFront. It proxies `/api/*` to the `api` contai
 ## Layout
 
 - `src/api.ts` calls the API. The contact result is one of `sent`, `invalid` (with field errors), `limited` (429), or `failed`.
-- `src/components/` holds the page sections. Behavior ported from the Laravel site's Vue instance:
-  - `AboutMe.tsx`: one strip open at a time. A photo isn't requested until its strip first opens.
-  - `MyWork.tsx`, `screenRotation.ts`, `monitor.ts`: the screenshot changes every 5 seconds, a hover shows that experience and pauses for 10 seconds, and the monitor resizes with the window.
-  - `ContactMe.tsx`, `FlashAlert.tsx`: field errors from a 400, inputs kept on error, a thank-you flash that fades after 5 seconds, and a message pointing to `contact@jakekillpack.com` on a 429 or a failed send. The hidden `website` field is the honeypot.
-- `src/styles/` is the Laravel site's `resources/sass` (removed in 3.0.0; it's in git history), unchanged apart from asset paths, the Flaticon font (WOFF only), and the honeypot's style. Bootstrap 4.6 comes from npm.
-- `src/assets/` holds the images and font the styles use. Vite fingerprints them. Photos and screenshots aren't here; they live in the assets buckets.
+- `src/components/` holds the page sections:
+  - `Layout.tsx`, `SiteNav.tsx`, `SiteFooter.tsx`: the skip link, pinned nav, and footer on every page.
+  - `Hero.tsx`, `MyWork.tsx` and `WorkCard.tsx`, `AboutMe.tsx`, `ContactMe.tsx`: the home page. About Me opens one tile at a time, and a photo isn't requested until its tile first opens.
+  - `ContactMe.tsx`, `FlashAlert.tsx`: field errors from a 400 (each field's accessible description), inputs kept on error, a thank-you toast that fades after 5 seconds, and a message pointing to `contact@jakekillpack.com` on a 429 or a failed send. The hidden `website` field is the honeypot.
+  - `project/`: the project page's blocks. `ProjectMedia` is where new project formats plug in.
+  - `Icon.tsx`: Font Awesome Free icons as inline SVG.
+- `src/index.css` is the stylesheet: Tailwind, plus the brand colors as theme tokens. Raleway comes from `@fontsource-variable/raleway`.
+- `src/assets/` holds the favicon. Photos and screenshots aren't here; they live in the assets buckets.
 
 ## Building and Deploying
 
-`npm run build` writes `web/dist/`: `index.html`, `robots.txt`, and fingerprinted files under `static/`. They go under `static/` rather than Vite's default `assets/`, because CloudFront routes `/assets/*` to the media bucket.
+`npm run build` writes `web/dist/`: `index.html`, `robots.txt`, and fingerprinted files under `static/`. They go under `static/` rather than Vite's default `assets/`, because CloudFront routes `/assets/*` to the media bucket. The build keeps license comments (`/*! ... */`, `@license`), which Vite's minifier would otherwise drop, so the bundle carries the Font Awesome and React credits.
 
 GitHub Actions deploys: **Deploy QA** (run it from the Actions tab, any branch) and **Deploy Production** (every push to `master`), both through `.github/workflows/deploy.yml`. To deploy by hand instead, build in the container, then upload with the host's AWS CLI. Upload `static/` before `index.html`, so the live page never points at files that aren't there yet:
 

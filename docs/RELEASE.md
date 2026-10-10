@@ -1,3 +1,9 @@
+Version 3.1.0 -- 10/09/2026
+
+    - Restyle the site with Tailwind: an employer-first home page with project cards, and project pages that show the desktop and phone screenshots together
+    - Fix accessibility and search findings: contrast, heading order, underlined links, a meta description, and keyboard access to About Me
+    - Bundle the Raleway font and switch to Font Awesome icons, removing Bootstrap, Sass, Google Fonts, and the Flaticon font
+
 Version 3.0.0 -- 10/09/2026
 
     - Rebuild the site as a React single-page app on S3 and CloudFront, with the same pages, styles, and behavior
