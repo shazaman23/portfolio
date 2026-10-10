@@ -1,8 +1,11 @@
 import { Outlet, ScrollRestoration } from 'react-router';
+import { useExperienceListLoader } from '../experienceList';
 import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 
 export function Layout() {
+  const experienceList = useExperienceListLoader();
+
   return (
     <>
       {/* Scrolls to the top on a new page, back to where you were on Back,
@@ -18,7 +21,7 @@ export function Layout() {
       {/* At least a screen tall, so the footer always starts below the fold:
           a page that's still loading can't push it down in view (CLS). */}
       <main id="content" tabIndex={-1} className="min-h-svh outline-none">
-        <Outlet />
+        <Outlet context={experienceList} />
       </main>
       <SiteFooter />
     </>

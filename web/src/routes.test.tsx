@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routes } from './routes';
@@ -185,8 +186,11 @@ describe('experience page', () => {
     // Anything shown earlier would move when the content arrives. The band
     // keeps its final height, and main is a screen tall, so the footer
     // stays below the fold (CLS).
-    let respond: (response: Response) => void = () => {};
-    stubFetch(() => new Promise<Response>((resolve) => (respond = resolve)));
+    // By URL: Layout asks for the project list too.
+    const waiting = new Map<string, (response: Response) => void>();
+    stubFetch(
+      (url) => new Promise<Response>((resolve) => waiting.set(url, resolve)),
+    );
     renderAt('/experience/1');
 
     const main = screen.getByRole('main');
@@ -194,7 +198,7 @@ describe('experience page', () => {
     expect(within(main).queryAllByRole('heading')).toHaveLength(0);
     expect(within(main).queryAllByRole('link')).toHaveLength(0);
 
-    respond(jsonResponse(200, uk2));
+    waiting.get('/api/experiences/1')!(jsonResponse(200, uk2));
     expect(
       await screen.findByRole('link', { name: 'Back to My Work' }),
     ).toBeInTheDocument();
@@ -318,5 +322,45 @@ describe('the 404 page', () => {
       screen.getByRole('link', { name: 'Go to the home page' }),
     ).toHaveAttribute('href', '/');
     expectHeadingsInOrder();
+  });
+});
+
+describe('going home from a project page', () => {
+  it('shows the cards on the first render, so #hash links land in place', async () => {
+    // Cards that arrive after the hash scroll push About Me and Contact Me
+    // down, and Safari doesn't keep the scroll position anchored.
+    const waiting: ((response: Response) => void)[] = [];
+    const fetch = stubFetch((url) =>
+      url === '/api/experiences'
+        ? new Promise<Response>((resolve) => waiting.push(resolve))
+        : jsonResponse(200, uk2),
+    );
+    const user = userEvent.setup();
+    renderAt('/experience/1');
+    await screen.findByRole('heading', {
+      level: 1,
+      name: 'UK2 – Dropdown Cart',
+    });
+
+    // Answer the list requests made so far; any made later stay pending.
+    await act(async () => {
+      for (const respond of waiting.splice(0)) {
+        respond(jsonResponse(200, [uk2, benegov]));
+      }
+    });
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Main' })).getByRole(
+        'link',
+        { name: 'Contact' },
+      ),
+    );
+
+    expect(
+      screen.getByRole('link', { name: /UK2\s+Dropdown Cart/ }),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll('li[aria-hidden="true"]')).toHaveLength(0);
+    expect(
+      fetch.mock.calls.filter(([url]) => url === '/api/experiences'),
+    ).toHaveLength(1);
   });
 });

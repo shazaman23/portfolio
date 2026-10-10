@@ -24,6 +24,7 @@ The dev server stands in for CloudFront. It proxies `/api/*` to the `api` contai
 ## Layout
 
 - `src/api.ts` calls the API. The contact result is one of `sent`, `invalid` (with field errors), `limited` (429), or `failed`.
+- `src/experienceList.ts` loads the project list once per visit, in `Layout`, so the home page has its cards on its first render when you come back to it.
 - `src/components/` holds the page sections:
   - `Layout.tsx`, `SiteNav.tsx`, `SiteFooter.tsx`: the skip link, pinned nav, and footer on every page.
   - `Hero.tsx`, `MyWork.tsx` and `WorkCard.tsx`, `AboutMe.tsx`, `ContactMe.tsx`: the home page. About Me opens one tile at a time, and a photo isn't requested until its tile first opens.
