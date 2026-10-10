@@ -1,0 +1,36 @@
+/* The site's styles: Tailwind's utilities, plus the brand theme and a few
+   base rules. See docs/action-plans/tailwind-restyle.md. */
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Raleway Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-blue: #61cdf5;
+  --color-brand-navy: #062533;
+  --color-brand-gray: #555555;
+  /* Body text on white, 14.7:1. */
+  --color-ink: #1f2937;
+  /* Small labels on white, 5.36:1. */
+  --color-label: #0e7490;
+  /* Text on the navy footer, 14.3:1. */
+  --color-on-navy: #e5f6fd;
+}
+
+@layer base {
+  html {
+    /* The pinned nav is 3.5rem tall; #hash links land just below it. */
+    scroll-padding-top: 4.5rem;
+  }
+
+  body {
+    @apply bg-white font-sans text-ink antialiased;
+  }
+
+  /* Navy on white and on the blue bands. The gray band and the navy footer
+     override it with focus-visible:outline-white and
+     focus-visible:outline-brand-blue. */
+  :focus-visible {
+    outline: 3px solid var(--color-brand-navy);
+    outline-offset: 3px;
+  }
+}

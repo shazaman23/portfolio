@@ -1,18 +1,27 @@
-import { Fragment, useState } from 'react';
+import {
+  faBook,
+  faGamepad,
+  faHouse,
+  faPersonHiking,
+  faTv,
+  type IconDefinition,
+} from '@fortawesome/free-solid-svg-icons';
+import { useState } from 'react';
 import { aboutPhoto } from '../paths';
+import { Icon } from './Icon';
 
-interface Strip {
+interface Topic {
   label: string;
-  icon: string;
+  icon: IconDefinition;
   photo: string;
   alt: string;
   text: string;
 }
 
-const strips: Strip[] = [
+const topics: Topic[] = [
   {
     label: 'Family',
-    icon: 'flaticon-home',
+    icon: faHouse,
     // This picture was taken by my awesome Mom, Kathleen Killpack
     photo: 'family-cabin.webp',
     alt: 'family picture',
@@ -20,7 +29,7 @@ const strips: Strip[] = [
   },
   {
     label: 'Gaming',
-    icon: 'flaticon-gamepad',
+    icon: faGamepad,
     // I took this picture myself! Crazy, huh? Phone cameras are pretty great...
     photo: 'betrayal-game-slim.webp',
     alt: 'board game',
@@ -28,7 +37,7 @@ const strips: Strip[] = [
   },
   {
     label: 'Learning',
-    icon: 'flaticon-books',
+    icon: faBook,
     // This picture was taken by the lovely Nikelle Maughan
     photo: 'studying.webp',
     alt: 'studying',
@@ -36,7 +45,7 @@ const strips: Strip[] = [
   },
   {
     label: 'Movies',
-    icon: 'flaticon-tv',
+    icon: faTv,
     // Again, I took this picture. Maybe I should go into photography...
     photo: 'popcorn.webp',
     alt: 'popcorn',
@@ -44,7 +53,7 @@ const strips: Strip[] = [
   },
   {
     label: 'Adventure',
-    icon: 'flaticon-hiker',
+    icon: faPersonHiking,
     // Picture taken by Sheri Kerr
     photo: 'jetski-day.webp',
     alt: 'jetski adventure',
@@ -53,9 +62,9 @@ const strips: Strip[] = [
 ];
 
 export function AboutMe() {
-  // One strip open at a time; clicking the open one closes it.
+  // One tile open at a time; clicking the open one closes it.
   const [open, setOpen] = useState<number | null>(null);
-  // Photos render only once their strip has opened, so the page doesn't
+  // Photos render only once their tile has opened, so the page doesn't
   // download all five up front. They stay rendered after that.
   const [opened, setOpened] = useState<ReadonlySet<number>>(new Set());
 
@@ -65,34 +74,58 @@ export function AboutMe() {
   };
 
   return (
-    <div className="row about-me">
-      <div className="w-100 d-flex flex-column">
-        <h2 className="main-title text-center font-weight-bold">About Me</h2>
+    <section
+      id="about-me"
+      aria-labelledby="about-me-title"
+      className="bg-brand-blue text-brand-navy"
+    >
+      <div className="mx-auto max-w-6xl px-4 py-16">
+        <h2
+          id="about-me-title"
+          className="text-center text-4xl font-bold sm:text-5xl"
+        >
+          About Me
+        </h2>
 
-        {strips.map((strip, index) => (
-          <Fragment key={strip.label}>
-            {index > 0 && <hr />}
-            <div
-              className={open === index ? 'strip is-open' : 'strip'}
-              onClick={() => toggle(index)}
-            >
-              <div className="flex-1 text-center strip-content">
-                <h4 className="strip-label">{strip.label}</h4>
-                <div className="strip-image">
-                  {opened.has(index) && (
-                    <img src={aboutPhoto(strip.photo)} alt={strip.alt} />
-                  )}
-                </div>
-              </div>
+        {/* 3 + 2 on phones, one row from 640 px. */}
+        <ul className="mt-10 flex flex-wrap justify-center gap-3">
+          {topics.map((topic, index) => (
+            <li key={topic.label} className="basis-[30%] sm:flex-1 sm:basis-0">
+              <button
+                type="button"
+                id={`about-${index}-tile`}
+                aria-expanded={open === index}
+                aria-controls={`about-${index}-panel`}
+                onClick={() => toggle(index)}
+                className="flex w-full flex-col items-center gap-2 rounded-xl bg-white px-2 py-4 font-bold aria-expanded:bg-brand-navy aria-expanded:text-white motion-safe:transition motion-safe:hover:-translate-y-0.5"
+              >
+                <Icon icon={topic.icon} className="text-3xl" />
+                {topic.label}
+              </button>
+            </li>
+          ))}
+        </ul>
 
-              <div className="flex-1 text-center strip-content">
-                <i className={`fi ${strip.icon} large strip-icon`}></i>
-                <div className="strip-paragraph">{strip.text}</div>
-              </div>
-            </div>
-          </Fragment>
+        {topics.map((topic, index) => (
+          <div
+            key={topic.label}
+            id={`about-${index}-panel`}
+            role="region"
+            aria-labelledby={`about-${index}-tile`}
+            hidden={open !== index}
+            className="mt-6 gap-6 rounded-xl bg-white p-6 text-ink sm:flex sm:items-start"
+          >
+            {opened.has(index) && (
+              <img
+                src={aboutPhoto(topic.photo)}
+                alt={topic.alt}
+                className="mx-auto w-full max-w-xs rounded-lg sm:mx-0"
+              />
+            )}
+            <p className="mt-4 text-lg sm:mt-0">{topic.text}</p>
+          </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

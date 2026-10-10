@@ -26,6 +26,18 @@ function expectFieldsKept() {
 }
 
 describe('ContactMe', () => {
+  it('is the Contact Me section, the target of the #contact-me links', () => {
+    const { container } = render(<ContactMe />);
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Contact Me' }),
+    ).toBeInTheDocument();
+    expect(container.querySelector('section#contact-me')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'contact@jakekillpack.com' }),
+    ).toHaveAttribute('href', 'mailto:contact@jakekillpack.com');
+  });
+
   it('sends the form, then clears it and flashes a thank-you', async () => {
     const fetch = stubFetch(() =>
       jsonResponse(200, { message: 'Thanks! Your message has been sent.' }),
@@ -52,7 +64,7 @@ describe('ContactMe', () => {
     expect(body).toHaveValue('');
   });
 
-  it('shows each field error above its field and keeps what was typed', async () => {
+  it('ties each field error to its field and keeps what was typed', async () => {
     stubFetch(() =>
       jsonResponse(400, {
         message: 'The given data was invalid.',
@@ -67,18 +79,20 @@ describe('ContactMe', () => {
 
     await fillAndSend(user);
 
-    const nameGroup = inputs().name.closest('.form-group') as HTMLElement;
-    const emailGroup = inputs().email.closest('.form-group') as HTMLElement;
-    const bodyGroup = inputs().body.closest('.form-group') as HTMLElement;
     expect(
-      await within(nameGroup).findByText(
+      await screen.findByText(
         'The name must not be greater than 150 characters.',
       ),
     ).toBeInTheDocument();
-    expect(
-      within(bodyGroup).getByText('The body field is required.'),
-    ).toBeInTheDocument();
-    expect(within(emailGroup).queryByRole('listitem')).toBeNull();
+    const { name, email, body } = inputs();
+    expect(name).toHaveAccessibleDescription(
+      'The name must not be greater than 150 characters.',
+    );
+    expect(name).toHaveAttribute('aria-invalid', 'true');
+    expect(body).toHaveAccessibleDescription('The body field is required.');
+    expect(body).toHaveAttribute('aria-invalid', 'true');
+    expect(email).not.toHaveAttribute('aria-invalid');
+    expect(email).not.toHaveAttribute('aria-describedby');
     expectFieldsKept();
     expect(screen.queryByRole('status')).toBeNull();
   });
@@ -163,11 +177,11 @@ describe('ContactMe', () => {
     )!;
     expect(honeypot).toHaveAttribute('tabindex', '-1');
     expect(honeypot).toHaveAttribute('autocomplete', 'off');
-    // Hidden from assistive tech too, and moved off-screen by CSS rather
-    // than display: none, which some bots skip.
-    expect(honeypot.closest('[aria-hidden="true"]')).toHaveClass(
-      'contact-website',
-    );
+    // Hidden from assistive tech too, and moved off-screen rather than
+    // display: none, which some bots skip.
+    const wrapper = honeypot.closest('[aria-hidden="true"]')!;
+    expect(wrapper).toHaveClass('absolute', '-left-[10000px]');
+    expect(wrapper).not.toHaveClass('hidden');
   });
 
   it('sends whatever a bot puts in the honeypot', async () => {

@@ -16,13 +16,12 @@ describe('FlashAlert', () => {
 
     const alert = screen.getByRole('status');
     expect(alert).toHaveTextContent('Sent!');
-    expect(alert).toHaveClass('alert', 'alert-success', 'flash-alert');
-    expect(alert).not.toHaveClass('hide-alert');
+    expect(alert).not.toHaveAttribute('data-hiding');
 
     act(() => {
       vi.advanceTimersByTime(5000);
     });
-    expect(alert).toHaveClass('hide-alert');
+    expect(alert).toHaveAttribute('data-hiding');
     expect(onDone).not.toHaveBeenCalled();
 
     // After the 1-second fade, so the invisible alert can't cover links.

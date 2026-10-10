@@ -1,8 +1,15 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { sendContact, type ContactErrors, type ContactForm } from '../api';
+import { EMAIL } from '../links';
 import { FlashAlert } from './FlashAlert';
+import { Icon } from './Icon';
 
-const EMAIL = 'contact@jakekillpack.com';
 const SENT = 'Thanks! Your message has been sent.';
 
 const empty: ContactForm = { name: '', email: '', body: '', website: '' };
@@ -45,78 +52,102 @@ export function ContactMe() {
   };
 
   return (
-    <div id="contact-me" className="row contact-me">
+    <section
+      id="contact-me"
+      aria-labelledby="contact-me-title"
+      className="bg-white"
+    >
       {flash !== null && (
         <FlashAlert key={flash} message={SENT} onDone={() => setFlash(null)} />
       )}
 
-      <div className="w-100 d-flex flex-column text-center">
-        <h2 className="main-title font-weight-bold">Contact Me</h2>
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <h2
+          id="contact-me-title"
+          className="text-4xl font-bold text-brand-navy sm:text-5xl"
+        >
+          Contact Me
+        </h2>
 
-        <span className="main-email">
-          <i className="fi flaticon-email"></i>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-        </span>
+        <p className="mt-6 text-lg">
+          <Icon icon={faEnvelope} className="mr-2 text-brand-navy" />
+          <a
+            href={`mailto:${EMAIL}`}
+            className="font-semibold text-brand-navy underline underline-offset-4"
+          >
+            {EMAIL}
+          </a>
+        </p>
 
-        <p>
+        <p className="mt-4">
           Need help with a project? Looking to hire? Fill in the form or use the
           link above to send me a message.
         </p>
 
-        <p>I'll get back to you in a flash!</p>
+        <p className="mt-2">I'll get back to you in a flash!</p>
 
-        <form className="email-form text-left" onSubmit={(e) => void submit(e)}>
-          <div className="form-row">
-            <div className="form-group col simple-set mobile-pop">
-              <label htmlFor="inputName">Name: </label>
-              <FieldErrors messages={errors.name} />
-              <input
-                id="inputName"
-                className="form-control"
-                type="text"
-                name="name"
-                placeholder="John Doe"
-                value={form.name}
-                onChange={update}
-                required
-              />
-            </div>
+        <form
+          className="relative mt-10 space-y-6 text-left"
+          onSubmit={(e) => void submit(e)}
+        >
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Field id="inputName" label="Name: " errors={errors.name}>
+              {(described) => (
+                <input
+                  id="inputName"
+                  className={INPUT}
+                  type="text"
+                  name="name"
+                  placeholder="John Doe"
+                  value={form.name}
+                  onChange={update}
+                  required
+                  {...described}
+                />
+              )}
+            </Field>
 
-            <div className="form-group col simple-set mobile-pop">
-              <label htmlFor="inputEmail">Return Email: </label>
-              <FieldErrors messages={errors.email} />
-              <input
-                id="inputEmail"
-                className="form-control"
-                type="email"
-                name="email"
-                placeholder="johndoe@example.com"
-                value={form.email}
-                onChange={update}
-                required
-              />
-            </div>
+            <Field id="inputEmail" label="Return Email: " errors={errors.email}>
+              {(described) => (
+                <input
+                  id="inputEmail"
+                  className={INPUT}
+                  type="email"
+                  name="email"
+                  placeholder="johndoe@example.com"
+                  value={form.email}
+                  onChange={update}
+                  required
+                  {...described}
+                />
+              )}
+            </Field>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="inputBody">How can I help?</label>
-            <FieldErrors messages={errors.body} />
-            <textarea
-              id="inputBody"
-              className="form-control"
-              name="body"
-              rows={10}
-              cols={40}
-              placeholder="John Doe's story..."
-              value={form.body}
-              onChange={update}
-              required
-            ></textarea>
-          </div>
+          <Field id="inputBody" label="How can I help?" errors={errors.body}>
+            {(described) => (
+              <textarea
+                id="inputBody"
+                className={INPUT}
+                name="body"
+                rows={10}
+                cols={40}
+                placeholder="John Doe's story..."
+                value={form.body}
+                onChange={update}
+                required
+                {...described}
+              ></textarea>
+            )}
+          </Field>
 
           {/* Honeypot: people never see it, so the API drops any message
-              that fills it in. */}
-          <div className="contact-website" aria-hidden="true">
+              that fills it in. Off-screen rather than display: none, which
+              some bots skip. */}
+          <div
+            className="absolute -left-[10000px] h-px w-px overflow-hidden"
+            aria-hidden="true"
+          >
             <label htmlFor="inputWebsite">Website</label>
             <input
               id="inputWebsite"
@@ -130,13 +161,16 @@ export function ContactMe() {
           </div>
 
           {failure && (
-            <div className="alert alert-danger" role="alert">
-              <p className="mb-0 px-3 py-2">
+            <div
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+              role="alert"
+            >
+              <p>
                 {failure === 'limited'
                   ? 'The contact form has reached its limit for today.'
                   : "Sorry, your message couldn't be sent."}{' '}
                 Please email{' '}
-                <a className="alert-link" href={`mailto:${EMAIL}`}>
+                <a className="font-bold underline" href={`mailto:${EMAIL}`}>
                   {EMAIL}
                 </a>{' '}
                 instead.
@@ -144,26 +178,57 @@ export function ContactMe() {
             </div>
           )}
 
-          <button type="submit" className="btn btn-info" disabled={sending}>
+          <button
+            type="submit"
+            className="rounded-full bg-brand-navy px-8 py-3 font-bold text-white hover:bg-brand-navy/85 disabled:opacity-60"
+            disabled={sending}
+          >
             Send Message
           </button>
         </form>
       </div>
-    </div>
+    </section>
   );
 }
 
-function FieldErrors({ messages }: { messages?: string[] }) {
-  if (!messages?.length) {
-    return null;
-  }
+// Borders are gray-500, 4.8:1 on white (inputs need 3:1).
+const INPUT =
+  'mt-1 w-full rounded-lg border border-gray-500 px-3 py-2 placeholder:text-gray-500 aria-invalid:border-red-700';
+
+interface FieldProps {
+  id: string;
+  label: string;
+  errors?: string[];
+  // Renders the input, given the ARIA attributes that tie it to its errors.
+  children: (described: {
+    'aria-invalid'?: true;
+    'aria-describedby'?: string;
+  }) => ReactNode;
+}
+
+// A label, the field's errors from a 400 (above the input, as on the Laravel
+// site), and the input, with the errors announced as its description.
+function Field({ id, label, errors, children }: FieldProps) {
+  const errorId = `${id}-errors`;
+  const messages = errors?.length ? errors : null;
   return (
-    <div className="alert alert-danger">
-      <ul>
-        {messages.map((message) => (
-          <li key={message}>{message}</li>
-        ))}
-      </ul>
+    <div>
+      <label htmlFor={id} className="font-semibold">
+        {label}
+      </label>
+      {messages && (
+        <ul
+          id={errorId}
+          className="mt-1 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800"
+        >
+          {messages.map((message) => (
+            <li key={message}>{message}</li>
+          ))}
+        </ul>
+      )}
+      {children(
+        messages ? { 'aria-invalid': true, 'aria-describedby': errorId } : {},
+      )}
     </div>
   );
 }

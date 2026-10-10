@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { routes } from './routes';
-import './styles/app.scss';
+import '@fontsource-variable/raleway';
+import './index.css';
 
 const router = createBrowserRouter(routes);
 

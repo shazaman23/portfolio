@@ -1,8 +1,14 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routes } from './routes';
-import { experience, jsonResponse, stubFetch } from './test/fixtures';
+import {
+  expectHeadingsInOrder,
+  experience,
+  jsonResponse,
+  stubFetch,
+} from './test/fixtures';
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -33,19 +39,21 @@ describe('home page', () => {
     const fetch = stubFetch(() => jsonResponse(200, [uk2, benegov]));
     renderAt('/');
 
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(
-      screen.getByRole('heading', { name: /Jake\s*Killpack/ }),
+      screen.getByRole('heading', { level: 1, name: 'Jake Killpack' }),
     ).toBeInTheDocument();
     for (const name of ['About Me', 'My Work', 'Contact Me']) {
       expect(screen.getByRole('heading', { name })).toBeInTheDocument();
     }
     expect(
-      await screen.findByRole('link', { name: /UK2 - Dropdown Cart/ }),
+      await screen.findByRole('link', { name: /UK2\s+Dropdown Cart/ }),
     ).toHaveAttribute('href', '/experience/1');
     expect(
-      screen.getByRole('link', { name: /Benegov - Site/ }),
+      screen.getByRole('link', { name: /Benegov\s+Site/ }),
     ).toHaveAttribute('href', '/experience/5');
     expect(fetch).toHaveBeenCalledWith('/api/experiences', expect.anything());
+    expectHeadingsInOrder();
   });
 
   it('says so when the experiences could not be loaded', async () => {
@@ -57,34 +65,57 @@ describe('home page', () => {
     ).toBeInTheDocument();
   });
 
-  it('credits the icons it uses', () => {
-    stubFetch(() => jsonResponse(200, []));
+  it('keeps its headings in order when the projects fail to load', async () => {
+    stubFetch(() => jsonResponse(503, {}));
     renderAt('/');
 
-    expect(screen.getByText(/Books icon made by/)).toBeInTheDocument();
-    expect(screen.getByText(/TV icon made by/)).toBeInTheDocument();
+    await screen.findByText(/projects couldn't be loaded/i);
+    expectHeadingsInOrder();
   });
 });
 
 describe('experience page', () => {
-  it('shows the experience, its mobile screenshot, and a link to the site', async () => {
+  it('shows the project: header, screenshots, story, and a link to the site', async () => {
     const fetch = stubFetch(() => jsonResponse(200, uk2));
-    const { container } = renderAt('/experience/1');
+    renderAt('/experience/1');
 
     expect(
-      await screen.findByRole('heading', { name: 'UK2 - Dropdown Cart' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'UK2 – Dropdown Cart',
+      }),
     ).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith('/api/experiences/1', expect.anything());
-    expect(screen.getByText('Carts were hard to reach.')).toBeInTheDocument();
-    expect(screen.getByText('A dropdown cart.')).toBeInTheDocument();
-    const demo = screen.getByText(/Hover the cart icon\./);
+    expect(screen.getByText('Developed')).toBeInTheDocument();
+
+    for (const [heading, text] of [
+      ['The problem', 'Carts were hard to reach.'],
+      ['What I did', 'A dropdown cart.'],
+      ['Try it', 'Hover the cart icon.'],
+    ]) {
+      const section = screen
+        .getByRole('heading', { level: 2, name: heading })
+        .closest('section')!;
+      expect(section).toHaveTextContent(text);
+    }
+
+    expect(screen.getByRole('link', { name: 'Visit uk2.net' })).toHaveAttribute(
+      'href',
+      'https://www.uk2.net/',
+    );
     expect(
-      within(demo).getByRole('link', { name: 'Check it out!!' }),
-    ).toHaveAttribute('href', 'https://www.uk2.net/');
+      screen.getByRole('img', { name: 'Dropdown Cart on a desktop browser' }),
+    ).toHaveAttribute(
+      'src',
+      '/assets/img/screenshots/desktop/uk2-dropdown.webp',
+    );
     expect(
-      container.querySelector<HTMLElement>('.cellphone .screen-demo')!.style
-        .backgroundImage,
-    ).toContain('/assets/img/screenshots/mobile/uk2-dropdown.webp');
+      screen.getByRole('img', { name: 'Dropdown Cart on a phone' }),
+    ).toHaveAttribute(
+      'src',
+      '/assets/img/screenshots/mobile/uk2-dropdown.webp',
+    );
+    expectHeadingsInOrder();
   });
 
   it('says a retired site is no longer running instead of linking to it', async () => {
@@ -92,65 +123,85 @@ describe('experience page', () => {
     renderAt('/experience/5');
 
     expect(
-      await screen.findByText(/It was a site\.\s+\(site no longer running\)/),
+      await screen.findByText('(site no longer running)'),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Check it out!!' })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^Visit / })).toBeNull();
   });
 
-  it('says when a feature has no mobile view', async () => {
+  it('leaves out the phone for a project with no mobile view', async () => {
     stubFetch(() => jsonResponse(200, { ...uk2, noMobile: true }));
-    const { container } = renderAt('/experience/1');
+    renderAt('/experience/1');
 
     expect(
-      await screen.findByText(
-        'This feature is not available for mobile devices.',
-      ),
-    ).toHaveClass('screen-demo', 'no-mobile');
-    expect(container.querySelectorAll('.screen-demo')).toHaveLength(1);
+      await screen.findByRole('img', {
+        name: 'Dropdown Cart on a desktop browser',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /on a phone/ })).toBeNull();
+    expect(screen.queryByText(/not available for mobile/)).toBeNull();
+  });
+
+  it('shows "Try it" only when there is demo text', async () => {
+    stubFetch(() => jsonResponse(200, { ...uk2, demoText: null }));
+    renderAt('/experience/1');
+
+    expect(
+      await screen.findByRole('heading', { name: 'What I did' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Try it' })).toBeNull();
+  });
+
+  it('handles a project with nothing optional: no demo, no site, no phone', async () => {
+    stubFetch(() =>
+      jsonResponse(200, {
+        ...benegov,
+        demoText: null,
+        url: null,
+        noMobile: true,
+      }),
+    );
+    renderAt('/experience/5');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Benegov – Site' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
+    ).toEqual(['The problem', 'What I did']);
+    expect(screen.getByText('(site no longer running)')).toBeInTheDocument();
+    expect(screen.getAllByRole('img')).toHaveLength(1);
+    expectHeadingsInOrder();
   });
 
   it('links back to My Work on the home page', async () => {
     stubFetch(() => jsonResponse(200, uk2));
     renderAt('/experience/1');
 
-    expect(await screen.findByRole('link', { name: /Back/ })).toHaveAttribute(
-      'href',
-      '/#my-work',
-    );
+    expect(
+      await screen.findByRole('link', { name: 'Back to My Work' }),
+    ).toHaveAttribute('href', '/#my-work');
   });
 
-  it('credits the icons it uses', async () => {
-    stubFetch(() => jsonResponse(200, uk2));
+  it('shows only an empty header band until the project loads', async () => {
+    // Anything shown earlier would move when the content arrives. The band
+    // keeps its final height, and main is a screen tall, so the footer
+    // stays below the fold (CLS).
+    // By URL: Layout asks for the project list too.
+    const waiting = new Map<string, (response: Response) => void>();
+    stubFetch(
+      (url) => new Promise<Response>((resolve) => waiting.set(url, resolve)),
+    );
     renderAt('/experience/1');
 
+    const main = screen.getByRole('main');
+    expect(main).toHaveTextContent('');
+    expect(within(main).queryAllByRole('heading')).toHaveLength(0);
+    expect(within(main).queryAllByRole('link')).toHaveLength(0);
+
+    waiting.get('/api/experiences/1')!(jsonResponse(200, uk2));
     expect(
-      await screen.findByText(/Cellphone icon made by/),
+      await screen.findByRole('link', { name: 'Back to My Work' }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/Books icon made by/)).toBeNull();
-  });
-
-  it('shows only an empty showcase until the experience loads', async () => {
-    // Anything shown earlier would move when the content arrives: the footer
-    // gets pushed down, and the Back link sits at a percentage of the page's
-    // height. Lighthouse scored that as the worst possible layout shift on
-    // mobile. The empty title keeps the top margin the real one gives the
-    // page on phones, so the showcase doesn't drop when it arrives.
-    let respond: (response: Response) => void = () => {};
-    stubFetch(() => new Promise<Response>((resolve) => (respond = resolve)));
-    const { container } = renderAt('/experience/1');
-
-    const showcase = container.querySelector('.showcase')!;
-    expect(showcase.children).toHaveLength(1);
-    expect(showcase.firstElementChild).toHaveClass('main-title');
-    expect(showcase.firstElementChild).toHaveAttribute('aria-hidden', 'true');
-    expect(showcase).toHaveTextContent('');
-    expect(screen.queryByText('Icon Attributions')).toBeNull();
-
-    respond(jsonResponse(200, uk2));
-    expect(
-      await screen.findByRole('link', { name: /Back/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Icon Attributions')).toBeInTheDocument();
   });
 
   it('is a 404 for an unknown experience', async () => {
@@ -160,11 +211,19 @@ describe('experience page', () => {
     expect(await screen.findByText('404 | Not Found')).toBeInTheDocument();
   });
 
-  it('says so when the experience could not be loaded', async () => {
+  it('says so when the experience could not be loaded, with the Back link', async () => {
     stubFetch(() => jsonResponse(503, {}));
     renderAt('/experience/1');
 
-    expect(await screen.findByText(/couldn't be loaded/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Sorry, this project couldn't be loaded. Please refresh the page to try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Back to My Work' }),
+    ).toBeInTheDocument();
+    expectHeadingsInOrder();
   });
 });
 
@@ -178,5 +237,146 @@ describe('unknown paths', () => {
       'content',
       'noindex',
     );
+  });
+});
+
+describe('every page', () => {
+  const pages = [
+    { path: '/', api: () => jsonResponse(200, [uk2]) },
+    { path: '/experience/1', api: () => jsonResponse(200, uk2) },
+    { path: '/nope', api: () => jsonResponse(200, []) },
+  ];
+
+  it.each(pages)(
+    '$path has a skip link to the main content',
+    ({ path, api }) => {
+      stubFetch(api);
+      renderAt(path);
+
+      expect(
+        screen.getByRole('link', { name: 'Skip to content' }),
+      ).toHaveAttribute('href', '#content');
+      const main = screen.getByRole('main');
+      expect(main).toHaveAttribute('id', 'content');
+      // Focusable from the skip link, but not a Tab stop.
+      expect(main).toHaveAttribute('tabindex', '-1');
+    },
+  );
+
+  it.each(pages)(
+    '$path has the nav to each home-page section',
+    ({ path, api }) => {
+      stubFetch(api);
+      renderAt(path);
+
+      const nav = screen.getByRole('navigation', { name: 'Main' });
+      expect(
+        within(nav).getByRole('link', { name: 'Jake Killpack' }),
+      ).toHaveAttribute('href', '/');
+      expect(within(nav).getByRole('link', { name: 'Work' })).toHaveAttribute(
+        'href',
+        '/#my-work',
+      );
+      expect(within(nav).getByRole('link', { name: 'About' })).toHaveAttribute(
+        'href',
+        '/#about-me',
+      );
+      expect(
+        within(nav).getByRole('link', { name: 'Contact' }),
+      ).toHaveAttribute('href', '/#contact-me');
+    },
+  );
+
+  it.each(pages)(
+    '$path has the footer links and no icon credits',
+    ({ path, api }) => {
+      stubFetch(api);
+      renderAt(path);
+
+      const footer = screen.getByRole('contentinfo');
+      expect(
+        within(footer).getByRole('link', { name: 'GitHub' }),
+      ).toHaveAttribute('href', 'https://github.com/shazaman23');
+      expect(
+        within(footer).getByRole('link', { name: 'LinkedIn' }),
+      ).toHaveAttribute(
+        'href',
+        'https://www.linkedin.com/in/jacob-killpack-overview/',
+      );
+      expect(
+        within(footer).getByRole('link', { name: 'contact@jakekillpack.com' }),
+      ).toHaveAttribute('href', 'mailto:contact@jakekillpack.com');
+      expect(screen.queryByText('Icon Attributions')).toBeNull();
+    },
+  );
+});
+
+describe('the 404 page', () => {
+  it('is headed by an h1 and links home', () => {
+    renderAt('/nope');
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: '404 | Not Found' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Go to the home page' }),
+    ).toHaveAttribute('href', '/');
+    expectHeadingsInOrder();
+  });
+});
+
+describe('going home from a project page', () => {
+  it('shows the cards on the first render, so #hash links land in place', async () => {
+    // Cards that arrive after the hash scroll push About Me and Contact Me
+    // down, and Safari doesn't keep the scroll position anchored.
+    const waiting: ((response: Response) => void)[] = [];
+    const fetch = stubFetch((url) =>
+      url === '/api/experiences'
+        ? new Promise<Response>((resolve) => waiting.push(resolve))
+        : jsonResponse(200, uk2),
+    );
+    const user = userEvent.setup();
+    renderAt('/experience/1');
+    await screen.findByRole('heading', {
+      level: 1,
+      name: 'UK2 – Dropdown Cart',
+    });
+
+    // Answer the list requests made so far; any made later stay pending.
+    await act(async () => {
+      for (const respond of waiting.splice(0)) {
+        respond(jsonResponse(200, [uk2, benegov]));
+      }
+    });
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Main' })).getByRole(
+        'link',
+        { name: 'Contact' },
+      ),
+    );
+
+    expect(
+      screen.getByRole('link', { name: /UK2\s+Dropdown Cart/ }),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll('li[aria-hidden="true"]')).toHaveLength(0);
+    expect(
+      fetch.mock.calls.filter(([url]) => url === '/api/experiences'),
+    ).toHaveLength(1);
+  });
+});
+
+describe('the skip link', () => {
+  it('moves focus to the main content without a history entry', async () => {
+    // A real #content navigation adds a history entry that React Router
+    // reads as Back, restoring an old scroll position (Safari, Firefox).
+    stubFetch(() => jsonResponse(200, [uk2]));
+    const user = userEvent.setup();
+    renderAt('/');
+    const before = window.location.href;
+
+    await user.click(screen.getByRole('link', { name: 'Skip to content' }));
+
+    expect(screen.getByRole('main')).toHaveFocus();
+    expect(window.location.href).toBe(before);
   });
 });
