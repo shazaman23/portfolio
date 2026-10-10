@@ -3,8 +3,8 @@ import { desktopScreenshot } from '../../paths';
 import { BrowserFrame } from './BrowserFrame';
 
 // The project's main visual. Today every project has a desktop screenshot;
-// new formats (a photo, a diagram, nothing) plug in here. See "Project Pages
-// Must Stay Flexible" in docs/action-plans/tailwind-restyle.md.
+// other formats plug in here (a photo, a diagram, or nothing), for work that
+// is private or has nothing to screenshot.
 export function ProjectMedia({ experience }: { experience: Experience }) {
   return (
     <BrowserFrame>
