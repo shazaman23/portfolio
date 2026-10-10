@@ -18,13 +18,13 @@ export function HomePage() {
   );
 }
 
-// The rest of the page doesn't wait for this: until it loads, the menu is
-// empty and the monitor blank.
+// The rest of the page doesn't wait for this: until it loads, My Work shows
+// placeholder cards.
 function useExperiences() {
   const [state, setState] = useState<{
-    experiences: Experience[];
+    experiences: Experience[] | null;
     loadFailed: boolean;
-  }>({ experiences: [], loadFailed: false });
+  }>({ experiences: null, loadFailed: false });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,7 +32,7 @@ function useExperiences() {
       (experiences) => setState({ experiences, loadFailed: false }),
       () => {
         if (!controller.signal.aborted) {
-          setState({ experiences: [], loadFailed: true });
+          setState({ experiences: null, loadFailed: true });
         }
       },
     );

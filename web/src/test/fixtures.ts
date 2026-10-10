@@ -44,17 +44,17 @@ export function sentJson(init: RequestInit | undefined): unknown {
 }
 
 // Fails if the headings under root skip a level going down (h2 straight to
-// h4), which Lighthouse flags. Going back up any number of levels is fine.
+// h4), which Lighthouse flags. Going back up any number of levels is fine,
+// and so is any first level, so a section can be checked on its own.
 export function expectHeadingsInOrder(root: ParentNode = document.body) {
   const levels = Array.from(
     root.querySelectorAll('h1, h2, h3, h4, h5, h6'),
     (h) => Number(h.tagName[1]),
   );
-  levels.forEach((level, i) => {
-    const previous = i === 0 ? 0 : levels[i - 1];
+  levels.slice(1).forEach((level, i) => {
     expect(
       level,
       `heading levels ${levels.join(', ')} skip a level`,
-    ).toBeLessThanOrEqual(previous + 1);
+    ).toBeLessThanOrEqual(levels[i] + 1);
   });
 }

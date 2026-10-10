@@ -1,70 +1,54 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router';
 import type { Experience } from '../api';
-import { monitorSize, useWindowWidth } from '../monitor';
-import { desktopScreenshot } from '../paths';
-import { useScreenRotation } from '../screenRotation';
+import { WorkCard } from './WorkCard';
 
 interface Props {
-  experiences: Experience[];
+  // null while loading.
+  experiences: Experience[] | null;
   loadFailed: boolean;
 }
 
+// Shown while loading, so the cards don't push the page down when they
+// arrive. About the height of a row of real cards.
+const PLACEHOLDERS = 3;
+
 export function MyWork({ experiences, loadFailed }: Props) {
-  const size = monitorSize(useWindowWidth());
-  const screenshots = useMemo(
-    () => experiences.map((e) => e.screenshot),
-    [experiences],
-  );
-  const { current, select } = useScreenRotation(screenshots);
-
   return (
-    <div id="my-work" className="row my-work">
-      <div className="d-flex flex-column w-100">
-        <h2 className="main-title font-weight-bold text-center">My Work</h2>
-
-        <div
-          className="computer-demo"
-          style={{ marginBottom: `${size.marginBottom}px` }}
+    <section
+      id="my-work"
+      aria-labelledby="my-work-title"
+      className="bg-brand-gray text-white"
+    >
+      <div className="mx-auto max-w-6xl px-4 py-16">
+        <h2
+          id="my-work-title"
+          className="text-center text-4xl font-bold sm:text-5xl"
         >
-          {/* Sizing and the cover fit come from _custom-images.scss; only
-              the image and the size change here. */}
-          <div
-            className="screen-demo"
-            style={{
-              backgroundImage: current
-                ? `url(${desktopScreenshot(current)})`
-                : undefined,
-              width: `${size.width}px`,
-              height: `${size.height}px`,
-            }}
-          ></div>
-        </div>
-
-        <div className="menu d-flex flex-row flex-wrap text-center">
-          {experiences.map((experience) => (
-            <div key={experience.id} className="menu-slot flex-1 text-center">
-              <Link to={`/experience/${experience.id}`}>
-                <div
-                  className="menu-option mx-auto"
-                  onMouseEnter={() => select(experience.screenshot)}
-                  onFocus={() => select(experience.screenshot)}
-                >
-                  {experience.brand} - {experience.title}
-                  <br />
-                  <small className="text-uppercase">{experience.myPart}</small>
-                </div>
-              </Link>
-            </div>
-          ))}
-          {loadFailed && (
-            <p className="flex-1">
-              The projects couldn't be loaded. Please refresh the page to try
-              again.
-            </p>
-          )}
-        </div>
+          My Work
+        </h2>
+        {loadFailed ? (
+          <p className="mt-8 text-center">
+            The projects couldn't be loaded. Please refresh the page to try
+            again.
+          </p>
+        ) : (
+          <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {experiences === null
+              ? Array.from({ length: PLACEHOLDERS }, (_, i) => (
+                  <li key={i} aria-hidden="true">
+                    <div className="h-full overflow-hidden rounded-xl bg-white/10">
+                      <div className="aspect-[3/2] bg-white/10" />
+                      <div className="h-24" />
+                    </div>
+                  </li>
+                ))
+              : experiences.map((experience) => (
+                  <li key={experience.id}>
+                    <WorkCard experience={experience} />
+                  </li>
+                ))}
+          </ul>
+        )}
       </div>
-    </div>
+    </section>
   );
 }

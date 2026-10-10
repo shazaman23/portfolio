@@ -46,10 +46,10 @@ describe('home page', () => {
       expect(screen.getByRole('heading', { name })).toBeInTheDocument();
     }
     expect(
-      await screen.findByRole('link', { name: /UK2 - Dropdown Cart/ }),
+      await screen.findByRole('link', { name: /UK2\s+Dropdown Cart/ }),
     ).toHaveAttribute('href', '/experience/1');
     expect(
-      screen.getByRole('link', { name: /Benegov - Site/ }),
+      screen.getByRole('link', { name: /Benegov\s+Site/ }),
     ).toHaveAttribute('href', '/experience/5');
     expect(fetch).toHaveBeenCalledWith('/api/experiences', expect.anything());
   });

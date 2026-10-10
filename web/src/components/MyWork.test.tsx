@@ -1,8 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Experience } from '../api';
-import { experience } from '../test/fixtures';
+import { expectHeadingsInOrder, experience } from '../test/fixtures';
 import { MyWork } from './MyWork';
 
 const experiences = [
@@ -13,137 +13,89 @@ const experiences = [
     myPart: 'Developed',
     screenshot: 'a.webp',
   }),
-  experience({ id: '2', title: 'Two', screenshot: 'b.webp' }),
-  experience({ id: '3', title: 'Three', screenshot: 'c.webp' }),
+  experience({
+    id: '5',
+    brand: 'Benegov',
+    title: 'Website',
+    myPart: 'Designed & Developed',
+    screenshot: 'b.webp',
+  }),
 ];
 
-function renderMyWork(list: Experience[] = experiences, loadFailed = false) {
-  const { container } = render(
+function renderMyWork(list: Experience[] | null, loadFailed = false) {
+  return render(
     <MemoryRouter>
       <MyWork experiences={list} loadFailed={loadFailed} />
     </MemoryRouter>,
   );
-  return {
-    frame: container.querySelector<HTMLElement>('.computer-demo')!,
-    screen: container.querySelector<HTMLElement>('.screen-demo')!,
-  };
-}
-
-const showing = (el: HTMLElement) => el.style.backgroundImage;
-const desktop = (name: string) =>
-  expect.stringContaining(`/assets/img/screenshots/desktop/${name}`);
-
-function setWindowWidth(width: number) {
-  window.innerWidth = width;
-  fireEvent(window, new Event('resize'));
 }
 
 describe('MyWork', () => {
-  beforeEach(() => {
-    window.innerWidth = 1280;
-  });
-
-  it('links each experience to its page', () => {
-    renderMyWork();
+  it('is the My Work section, the target of the #my-work links', () => {
+    const { container } = renderMyWork(experiences);
 
     expect(
-      // The <br> between the title and the role adds no space in jsdom.
-      screen.getByRole('link', { name: /^UK2 - Dropdown Cart\s*Developed$/ }),
-    ).toHaveAttribute('href', '/experience/1');
-    expect(screen.getAllByRole('link')).toHaveLength(3);
-  });
-
-  it('shows a blank screen until the experiences load', () => {
-    const { screen: monitor } = renderMyWork([]);
-
-    expect(showing(monitor)).toBe('');
-  });
-
-  it('says so when the experiences could not be loaded', () => {
-    renderMyWork([], true);
-
-    expect(
-      screen.getByText(/projects couldn't be loaded/i),
+      screen.getByRole('heading', { level: 2, name: 'My Work' }),
     ).toBeInTheDocument();
+    expect(container.querySelector('section#my-work')).toBeInTheDocument();
   });
 
-  describe('screenshot rotation', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
+  it('shows one card per project, linking to its page', () => {
+    renderMyWork(experiences);
+
+    const card = screen.getByRole('link', {
+      name: /UK2\s+Dropdown Cart\s+Developed/,
     });
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    const advance = (ms: number) =>
-      act(() => {
-        vi.advanceTimersByTime(ms);
-      });
-
-    it('starts on the first screenshot and moves on every 5 seconds', () => {
-      const { screen: monitor } = renderMyWork();
-      expect(showing(monitor)).toEqual(desktop('a.webp'));
-
-      advance(4999);
-      expect(showing(monitor)).toEqual(desktop('a.webp'));
-      advance(1);
-      expect(showing(monitor)).toEqual(desktop('b.webp'));
-      advance(5000);
-      expect(showing(monitor)).toEqual(desktop('c.webp'));
-      advance(5000);
-      expect(showing(monitor)).toEqual(desktop('a.webp'));
-    });
-
-    it('shows a hovered experience and pauses for 10 seconds', () => {
-      const { screen: monitor } = renderMyWork();
-
-      fireEvent.mouseEnter(screen.getByText(/Three/));
-      expect(showing(monitor)).toEqual(desktop('c.webp'));
-
-      // As on the Laravel site: rotation restarts 10 seconds after the hover,
-      // so the next change comes 5 seconds after that.
-      advance(14999);
-      expect(showing(monitor)).toEqual(desktop('c.webp'));
-      advance(1);
-      expect(showing(monitor)).toEqual(desktop('b.webp'));
-      advance(5000);
-      expect(showing(monitor)).toEqual(desktop('c.webp'));
-    });
-
-    it('restarts the pause on each hover', () => {
-      const { screen: monitor } = renderMyWork();
-
-      fireEvent.mouseEnter(screen.getByText(/Three/));
-      advance(9000);
-      fireEvent.mouseEnter(screen.getByText(/Dropdown Cart/));
-      expect(showing(monitor)).toEqual(desktop('a.webp'));
-
-      // Without the restart, the first hover's pause would end here and the
-      // rotation would move on to b 6 seconds after the second hover.
-      advance(14999);
-      expect(showing(monitor)).toEqual(desktop('a.webp'));
-      advance(1);
-      expect(showing(monitor)).toEqual(desktop('b.webp'));
-    });
+    expect(card).toHaveAttribute('href', '/experience/1');
+    expect(
+      within(card).getByRole('heading', { level: 3, name: 'Dropdown Cart' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: /Benegov\s+Website\s+Designed & Developed/,
+      }),
+    ).toHaveAttribute('href', '/experience/5');
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expectHeadingsInOrder();
   });
 
-  describe('monitor size', () => {
-    it('is full size on a wide window', () => {
-      const { frame, screen: monitor } = renderMyWork();
+  it("shows each card's desktop screenshot, loaded lazily", () => {
+    const { container } = renderMyWork(experiences);
 
-      expect(monitor.style.width).toBe('632px');
-      expect(monitor.style.height).toBe('422px');
-      expect(frame.style.marginBottom).toBe('0px');
-    });
+    const images = container.querySelectorAll('img');
+    expect(images).toHaveLength(2);
+    expect(images[0]).toHaveAttribute(
+      'src',
+      '/assets/img/screenshots/desktop/a.webp',
+    );
+    expect(images[0]).toHaveAttribute('loading', 'lazy');
+    // The card's link already names the project.
+    expect(images[0]).toHaveAttribute('alt', '');
+  });
 
-    it('follows the window as it resizes', () => {
-      const { frame, screen: monitor } = renderMyWork();
+  it('holds the space with three placeholder cards while loading', () => {
+    const { container } = renderMyWork(null);
 
-      act(() => setWindowWidth(375));
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
+    const placeholders = container.querySelectorAll('li[aria-hidden="true"]');
+    expect(placeholders).toHaveLength(3);
+  });
 
-      expect(parseFloat(monitor.style.width)).toBeCloseTo(375 / 1.4, 3);
-      expect(parseFloat(monitor.style.height)).toBeCloseTo(375 / 1.4 / 1.46, 3);
-      expect(frame.style.marginBottom).toBe('-393px');
-    });
+  it('shows no cards and no placeholders for an empty list', () => {
+    const { container } = renderMyWork([]);
+
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
+    expect(container.querySelectorAll('li')).toHaveLength(0);
+  });
+
+  it('says so when the projects could not be loaded', () => {
+    renderMyWork(null, true);
+
+    expect(
+      screen.getByText(
+        "The projects couldn't be loaded. Please refresh the page to try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
 });
