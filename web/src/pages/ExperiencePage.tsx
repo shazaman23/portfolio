@@ -64,7 +64,7 @@ export function ExperiencePage() {
 function Details({ experience }: { experience: Experience }) {
   return (
     <>
-      <h2 className="main-title text-center font-weight-bold">
+      <h2 className="main-title font-weight-bold text-center">
         {experience.brand} - {experience.title}
       </h2>
 

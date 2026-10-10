@@ -50,7 +50,7 @@ export function ContactMe() {
         <FlashAlert key={flash} message={SENT} onDone={() => setFlash(null)} />
       )}
 
-      <div className="w-100 d-flex flex-column text-center">
+      <div className="d-flex flex-column w-100 text-center">
         <h2 className="main-title font-weight-bold">Contact Me</h2>
 
         <span className="main-email">

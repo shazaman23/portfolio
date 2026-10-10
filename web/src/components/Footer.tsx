@@ -10,7 +10,7 @@ interface Props {
 export function Footer({ className, columns }: Props) {
   return (
     <div className={className}>
-      <div className="w-100 d-flex flex-column">
+      <div className="d-flex flex-column w-100">
         <h4 className="mx-auto">Icon Attributions</h4>
 
         <div className="d-flex icon-bib">
@@ -27,7 +27,7 @@ export function Footer({ className, columns }: Props) {
           ))}
         </div>
 
-        <div className="w-100 d-flex contact-info text-center">
+        <div className="d-flex contact-info w-100 text-center">
           <div className="flex-1">
             <a href="https://github.com/shazaman23">
               <i className="fi flaticon-github"></i> GitHub

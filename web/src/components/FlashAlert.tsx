@@ -27,7 +27,11 @@ export function FlashAlert({ message, onDone }: Props) {
 
   return (
     <div
-      className={`alert alert-success flash-alert${hiding ? ' hide-alert' : ''}`}
+      className={
+        hiding
+          ? 'alert alert-success flash-alert hide-alert'
+          : 'alert alert-success flash-alert'
+      }
       role="status"
     >
       <p>{message}</p>

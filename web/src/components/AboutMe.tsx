@@ -66,8 +66,8 @@ export function AboutMe() {
 
   return (
     <div className="row about-me">
-      <div className="w-100 d-flex flex-column">
-        <h2 className="main-title text-center font-weight-bold">About Me</h2>
+      <div className="d-flex flex-column w-100">
+        <h2 className="main-title font-weight-bold text-center">About Me</h2>
 
         {strips.map((strip, index) => (
           <Fragment key={strip.label}>
@@ -76,7 +76,7 @@ export function AboutMe() {
               className={open === index ? 'strip is-open' : 'strip'}
               onClick={() => toggle(index)}
             >
-              <div className="flex-1 text-center strip-content">
+              <div className="strip-content flex-1 text-center">
                 <h4 className="strip-label">{strip.label}</h4>
                 <div className="strip-image">
                   {opened.has(index) && (
@@ -85,7 +85,7 @@ export function AboutMe() {
                 </div>
               </div>
 
-              <div className="flex-1 text-center strip-content">
+              <div className="strip-content flex-1 text-center">
                 <i className={`fi ${strip.icon} large strip-icon`}></i>
                 <div className="strip-paragraph">{strip.text}</div>
               </div>

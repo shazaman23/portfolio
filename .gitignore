@@ -9,6 +9,9 @@ docker-compose.override.yml
 .vscode
 *.swp
 
+# Brainstorming mockups (superpowers visual companion)
+/.superpowers/
+
 # Terraform (every root: global, envs/qa, envs/prod)
 **/.terraform/
 terraform/**/*.tfstate*

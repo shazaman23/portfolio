@@ -20,8 +20,8 @@ export function MyWork({ experiences, loadFailed }: Props) {
 
   return (
     <div id="my-work" className="row my-work">
-      <div className="w-100 d-flex flex-column">
-        <h2 className="main-title text-center font-weight-bold">My Work</h2>
+      <div className="d-flex flex-column w-100">
+        <h2 className="main-title font-weight-bold text-center">My Work</h2>
 
         <div
           className="computer-demo"
@@ -43,7 +43,7 @@ export function MyWork({ experiences, loadFailed }: Props) {
 
         <div className="menu d-flex flex-row flex-wrap text-center">
           {experiences.map((experience) => (
-            <div key={experience.id} className="flex-1 text-center menu-slot">
+            <div key={experience.id} className="menu-slot flex-1 text-center">
               <Link to={`/experience/${experience.id}`}>
                 <div
                   className="menu-option mx-auto"
