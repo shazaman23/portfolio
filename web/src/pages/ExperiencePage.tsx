@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { getExperience, type Experience } from '../api';
-import { BackArrow } from '../components/BackArrow';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '../components/Icon';
 import { Footer } from '../components/Footer';
 import { experienceCredits } from '../credits';
 import { mobileScreenshot } from '../paths';
@@ -39,7 +40,7 @@ export function ExperiencePage() {
       <div className="content showcase container-fluid position-relative">
         <div className="position-absolute back-btn">
           <Link className="text-uppercase" to="/#my-work">
-            <BackArrow /> Back
+            <Icon icon={faArrowLeft} /> Back
           </Link>
         </div>
 

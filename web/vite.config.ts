@@ -17,6 +17,12 @@ export default defineConfig({
     // Vite's default, assets/, would put the built JS and CSS under /assets/,
     // which CloudFront routes to the media bucket.
     assetsDir: 'static',
+    // The minifier drops every comment by default, license notices included.
+    // Keep those (/*! ... */, @license), so the bundle carries the credits
+    // the React and Font Awesome licenses ask for.
+    rolldownOptions: {
+      output: { comments: { legal: true, annotation: false, jsdoc: false } },
+    },
   },
   server: {
     host: true,
