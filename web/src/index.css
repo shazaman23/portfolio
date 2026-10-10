@@ -1,5 +1,5 @@
 /* The site's styles: Tailwind's utilities, plus the brand theme and a few
-   base rules. See docs/action-plans/tailwind-restyle.md. */
+   base rules. */
 @import 'tailwindcss';
 
 @theme {

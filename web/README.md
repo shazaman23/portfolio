@@ -16,19 +16,21 @@ Everything runs in the `web` container from `compose.yaml`. Run these from the r
 docker compose up -d                                 # the whole stack; the site is at http://localhost:5173
 docker compose run --rm --no-deps web npm test       # unit tests, no stack needed
 docker compose run --rm --no-deps web npm run lint
+docker compose run --rm --no-deps web npm run format # Prettier, including Tailwind class order
 docker compose run --rm --no-deps web npm run build  # type-checks, then builds into web/dist
 ```
 
-The dev server stands in for CloudFront. It proxies `/api/*` to the `api` container and `/assets/*` to the LocalStack assets bucket. Images come from `assets/` at the repo root (see "Asset Strategy" in the plan). `npm run preview` serves a production build with the same proxies.
+The dev server stands in for CloudFront. It proxies `/api/*` to the `api` container and `/assets/*` to the LocalStack assets bucket. Images come from `assets/` at the repo root (see "Asset Strategy" in `serverless-rebuild.md`). `npm run preview` serves a production build with the same proxies.
 
 ## Layout
 
 - `src/api.ts` calls the API. The contact result is one of `sent`, `invalid` (with field errors), `limited` (429), or `failed`.
 - `src/experienceList.ts` loads the project list once per visit, in `Layout`, so the home page has its cards on its first render when you come back to it.
+- `src/links.ts` holds the email, GitHub, and LinkedIn addresses. `src/visitLabel.ts` names a project's site for its Visit button ("Visit uk2.net").
 - `src/components/` holds the page sections:
   - `Layout.tsx`, `SiteNav.tsx`, `SiteFooter.tsx`: the skip link, pinned nav, and footer on every page.
-  - `Hero.tsx`, `MyWork.tsx` and `WorkCard.tsx`, `AboutMe.tsx`, `ContactMe.tsx`: the home page. About Me opens one tile at a time, and a photo isn't requested until its tile first opens.
-  - `ContactMe.tsx`, `FlashAlert.tsx`: field errors from a 400 (each field's accessible description), inputs kept on error, a thank-you toast that fades after 5 seconds, and a message pointing to `contact@jakekillpack.com` on a 429 or a failed send. The hidden `website` field is the honeypot.
+  - `Hero.tsx`, `MyWork.tsx` with `WorkCard.tsx`, and `AboutMe.tsx`: the top of the home page. About Me opens one tile at a time, and a photo isn't requested until its tile first opens.
+  - `ContactMe.tsx` and `FlashAlert.tsx`: the contact form that ends the home page. Field errors from a 400 (each field's accessible description), inputs kept on error, a thank-you toast that fades after 5 seconds, and a message pointing to `contact@jakekillpack.com` on a 429 or a failed send. The hidden `website` field is the honeypot.
   - `project/`: the project page's blocks. `ProjectMedia` is where new project formats plug in.
   - `Icon.tsx`: Font Awesome Free icons as inline SVG.
 - `src/index.css` is the stylesheet: Tailwind, plus the brand colors as theme tokens. Raleway comes from `@fontsource-variable/raleway`.
