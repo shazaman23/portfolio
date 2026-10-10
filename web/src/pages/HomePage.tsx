@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { getExperiences, type Experience } from '../api';
 import { AboutMe } from '../components/AboutMe';
 import { ContactMe } from '../components/ContactMe';
-import { Footer } from '../components/Footer';
-import { homeCredits } from '../credits';
 import { MyWork } from '../components/MyWork';
 
 export function HomePage() {
@@ -28,7 +26,6 @@ export function HomePage() {
       <AboutMe />
       <MyWork experiences={experiences} loadFailed={loadFailed} />
       <ContactMe />
-      <Footer className="row footer" columns={homeCredits} />
     </div>
   );
 }

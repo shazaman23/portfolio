@@ -3,8 +3,6 @@ import { Link, useParams } from 'react-router';
 import { getExperience, type Experience } from '../api';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Icon } from '../components/Icon';
-import { Footer } from '../components/Footer';
-import { experienceCredits } from '../credits';
 import { mobileScreenshot } from '../paths';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -56,8 +54,6 @@ export function ExperiencePage() {
           </div>
         )}
       </div>
-
-      <Footer className="footer" columns={experienceCredits} />
     </>
   );
 }

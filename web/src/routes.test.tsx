@@ -2,7 +2,12 @@ import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routes } from './routes';
-import { experience, jsonResponse, stubFetch } from './test/fixtures';
+import {
+  expectHeadingsInOrder,
+  experience,
+  jsonResponse,
+  stubFetch,
+} from './test/fixtures';
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -55,14 +60,6 @@ describe('home page', () => {
     expect(
       await screen.findByText(/projects couldn't be loaded/i),
     ).toBeInTheDocument();
-  });
-
-  it('credits the icons it uses', () => {
-    stubFetch(() => jsonResponse(200, []));
-    renderAt('/');
-
-    expect(screen.getByText(/Books icon made by/)).toBeInTheDocument();
-    expect(screen.getByText(/TV icon made by/)).toBeInTheDocument();
   });
 });
 
@@ -119,16 +116,6 @@ describe('experience page', () => {
     );
   });
 
-  it('credits the icons it uses', async () => {
-    stubFetch(() => jsonResponse(200, uk2));
-    renderAt('/experience/1');
-
-    expect(
-      await screen.findByText(/Cellphone icon made by/),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/Books icon made by/)).toBeNull();
-  });
-
   it('shows only an empty showcase until the experience loads', async () => {
     // Anything shown earlier would move when the content arrives: the footer
     // gets pushed down, and the Back link sits at a percentage of the page's
@@ -144,13 +131,11 @@ describe('experience page', () => {
     expect(showcase.firstElementChild).toHaveClass('main-title');
     expect(showcase.firstElementChild).toHaveAttribute('aria-hidden', 'true');
     expect(showcase).toHaveTextContent('');
-    expect(screen.queryByText('Icon Attributions')).toBeNull();
 
     respond(jsonResponse(200, uk2));
     expect(
       await screen.findByRole('link', { name: /Back/ }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Icon Attributions')).toBeInTheDocument();
   });
 
   it('is a 404 for an unknown experience', async () => {
@@ -178,5 +163,90 @@ describe('unknown paths', () => {
       'content',
       'noindex',
     );
+  });
+});
+
+describe('every page', () => {
+  const pages = [
+    { path: '/', api: () => jsonResponse(200, [uk2]) },
+    { path: '/experience/1', api: () => jsonResponse(200, uk2) },
+    { path: '/nope', api: () => jsonResponse(200, []) },
+  ];
+
+  it.each(pages)(
+    '$path has a skip link to the main content',
+    ({ path, api }) => {
+      stubFetch(api);
+      renderAt(path);
+
+      expect(
+        screen.getByRole('link', { name: 'Skip to content' }),
+      ).toHaveAttribute('href', '#content');
+      const main = screen.getByRole('main');
+      expect(main).toHaveAttribute('id', 'content');
+      // Focusable from the skip link, but not a Tab stop.
+      expect(main).toHaveAttribute('tabindex', '-1');
+    },
+  );
+
+  it.each(pages)(
+    '$path has the nav to each home-page section',
+    ({ path, api }) => {
+      stubFetch(api);
+      renderAt(path);
+
+      const nav = screen.getByRole('navigation', { name: 'Main' });
+      expect(
+        within(nav).getByRole('link', { name: 'Jake Killpack' }),
+      ).toHaveAttribute('href', '/');
+      expect(within(nav).getByRole('link', { name: 'Work' })).toHaveAttribute(
+        'href',
+        '/#my-work',
+      );
+      expect(within(nav).getByRole('link', { name: 'About' })).toHaveAttribute(
+        'href',
+        '/#about-me',
+      );
+      expect(
+        within(nav).getByRole('link', { name: 'Contact' }),
+      ).toHaveAttribute('href', '/#contact-me');
+    },
+  );
+
+  it.each(pages)(
+    '$path has the footer links and no icon credits',
+    ({ path, api }) => {
+      stubFetch(api);
+      renderAt(path);
+
+      const footer = screen.getByRole('contentinfo');
+      expect(
+        within(footer).getByRole('link', { name: 'GitHub' }),
+      ).toHaveAttribute('href', 'https://github.com/shazaman23');
+      expect(
+        within(footer).getByRole('link', { name: 'LinkedIn' }),
+      ).toHaveAttribute(
+        'href',
+        'https://www.linkedin.com/in/jacob-killpack-overview/',
+      );
+      expect(
+        within(footer).getByRole('link', { name: 'contact@jakekillpack.com' }),
+      ).toHaveAttribute('href', 'mailto:contact@jakekillpack.com');
+      expect(screen.queryByText('Icon Attributions')).toBeNull();
+    },
+  );
+});
+
+describe('the 404 page', () => {
+  it('is headed by an h1 and links home', () => {
+    renderAt('/nope');
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: '404 | Not Found' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Go to the home page' }),
+    ).toHaveAttribute('href', '/');
+    expectHeadingsInOrder();
   });
 });

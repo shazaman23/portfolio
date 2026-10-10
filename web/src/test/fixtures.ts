@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import type { Experience } from '../api';
 
 export function experience(overrides: Partial<Experience> = {}): Experience {
@@ -41,4 +41,20 @@ export function stubFetch(
 // The JSON body of a request made through stubFetch.
 export function sentJson(init: RequestInit | undefined): unknown {
   return JSON.parse(init?.body as string);
+}
+
+// Fails if the headings under root skip a level going down (h2 straight to
+// h4), which Lighthouse flags. Going back up any number of levels is fine.
+export function expectHeadingsInOrder(root: ParentNode = document.body) {
+  const levels = Array.from(
+    root.querySelectorAll('h1, h2, h3, h4, h5, h6'),
+    (h) => Number(h.tagName[1]),
+  );
+  levels.forEach((level, i) => {
+    const previous = i === 0 ? 0 : levels[i - 1];
+    expect(
+      level,
+      `heading levels ${levels.join(', ')} skip a level`,
+    ).toBeLessThanOrEqual(previous + 1);
+  });
 }
