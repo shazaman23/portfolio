@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { getExperience, type Experience } from '../api';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Icon } from '../components/Icon';
-import { mobileScreenshot } from '../paths';
+import { ProjectHeader } from '../components/project/ProjectHeader';
+import { ProjectMedia } from '../components/project/ProjectMedia';
+import { ProjectStory } from '../components/project/ProjectStory';
 import { NotFoundPage } from './NotFoundPage';
 
 type Lookup =
@@ -20,80 +20,25 @@ export function ExperiencePage() {
   if (lookup.status === 'missing') {
     return <NotFoundPage />;
   }
-  // Only an empty showcase while loading. Anything shown earlier would move
-  // when the content arrives (the footer gets pushed down, and the Back link
-  // sits at a percentage of the page's height): a large layout shift. The
-  // empty title keeps the top margin the real title gives the showcase on
-  // phones (it collapses through), so the showcase doesn't drop either.
-  if (lookup.status === 'loading') {
-    return (
-      <div className="content showcase container-fluid position-relative">
-        <h2 className="main-title" aria-hidden="true"></h2>
-      </div>
-    );
-  }
 
   return (
     <>
-      <div className="content showcase container-fluid position-relative">
-        <div className="position-absolute back-btn">
-          <Link className="text-uppercase" to="/#my-work">
-            <Icon icon={faArrowLeft} /> Back
-          </Link>
+      <ProjectHeader
+        experience={lookup.status === 'found' ? lookup.experience : null}
+        loading={lookup.status === 'loading'}
+      />
+      {lookup.status === 'found' && (
+        <div className="mx-auto max-w-6xl px-4 py-12">
+          <ProjectMedia experience={lookup.experience} />
+          <ProjectStory experience={lookup.experience} />
         </div>
-
-        {lookup.status === 'found' && (
-          <Details experience={lookup.experience} />
-        )}
-        {lookup.status === 'failed' && (
-          <div className="features">
-            <p>
-              Sorry, this project couldn't be loaded. Please refresh the page to
-              try again.
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-function Details({ experience }: { experience: Experience }) {
-  return (
-    <>
-      <h2 className="main-title font-weight-bold text-center">
-        {experience.brand} - {experience.title}
-      </h2>
-
-      <div className="display cellphone">
-        {experience.noMobile ? (
-          <div className="screen-demo no-mobile">
-            This feature is not available for mobile devices.
-          </div>
-        ) : (
-          <div
-            className="screen-demo"
-            style={{
-              backgroundImage: `url(${mobileScreenshot(experience.screenshot)})`,
-            }}
-          ></div>
-        )}
-      </div>
-
-      <div>
-        <div className="features">
-          <p>{experience.problem}</p>
-          <p>{experience.description}</p>
-          <p>
-            {experience.demoText}{' '}
-            {experience.url ? (
-              <a href={experience.url}>Check it out!!</a>
-            ) : (
-              '(site no longer running)'
-            )}
-          </p>
-        </div>
-      </div>
+      )}
+      {lookup.status === 'failed' && (
+        <p className="mx-auto max-w-6xl px-4 py-12 text-lg">
+          Sorry, this project couldn't be loaded. Please refresh the page to try
+          again.
+        </p>
+      )}
     </>
   );
 }

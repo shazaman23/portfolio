@@ -63,27 +63,58 @@ describe('home page', () => {
       await screen.findByText(/projects couldn't be loaded/i),
     ).toBeInTheDocument();
   });
+
+  it('keeps its headings in order when the projects fail to load', async () => {
+    stubFetch(() => jsonResponse(503, {}));
+    renderAt('/');
+
+    await screen.findByText(/projects couldn't be loaded/i);
+    expectHeadingsInOrder();
+  });
 });
 
 describe('experience page', () => {
-  it('shows the experience, its mobile screenshot, and a link to the site', async () => {
+  it('shows the project: header, screenshots, story, and a link to the site', async () => {
     const fetch = stubFetch(() => jsonResponse(200, uk2));
-    const { container } = renderAt('/experience/1');
+    renderAt('/experience/1');
 
     expect(
-      await screen.findByRole('heading', { name: 'UK2 - Dropdown Cart' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'UK2 – Dropdown Cart',
+      }),
     ).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith('/api/experiences/1', expect.anything());
-    expect(screen.getByText('Carts were hard to reach.')).toBeInTheDocument();
-    expect(screen.getByText('A dropdown cart.')).toBeInTheDocument();
-    const demo = screen.getByText(/Hover the cart icon\./);
+    expect(screen.getByText('Developed')).toBeInTheDocument();
+
+    for (const [heading, text] of [
+      ['The problem', 'Carts were hard to reach.'],
+      ['What I did', 'A dropdown cart.'],
+      ['Try it', 'Hover the cart icon.'],
+    ]) {
+      const section = screen
+        .getByRole('heading', { level: 2, name: heading })
+        .closest('section')!;
+      expect(section).toHaveTextContent(text);
+    }
+
+    expect(screen.getByRole('link', { name: 'Visit uk2.net' })).toHaveAttribute(
+      'href',
+      'https://www.uk2.net/',
+    );
     expect(
-      within(demo).getByRole('link', { name: 'Check it out!!' }),
-    ).toHaveAttribute('href', 'https://www.uk2.net/');
+      screen.getByRole('img', { name: 'Dropdown Cart on a desktop browser' }),
+    ).toHaveAttribute(
+      'src',
+      '/assets/img/screenshots/desktop/uk2-dropdown.webp',
+    );
     expect(
-      container.querySelector<HTMLElement>('.cellphone .screen-demo')!.style
-        .backgroundImage,
-    ).toContain('/assets/img/screenshots/mobile/uk2-dropdown.webp');
+      screen.getByRole('img', { name: 'Dropdown Cart on a phone' }),
+    ).toHaveAttribute(
+      'src',
+      '/assets/img/screenshots/mobile/uk2-dropdown.webp',
+    );
+    expectHeadingsInOrder();
   });
 
   it('says a retired site is no longer running instead of linking to it', async () => {
@@ -91,52 +122,81 @@ describe('experience page', () => {
     renderAt('/experience/5');
 
     expect(
-      await screen.findByText(/It was a site\.\s+\(site no longer running\)/),
+      await screen.findByText('(site no longer running)'),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Check it out!!' })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^Visit / })).toBeNull();
   });
 
-  it('says when a feature has no mobile view', async () => {
+  it('leaves out the phone for a project with no mobile view', async () => {
     stubFetch(() => jsonResponse(200, { ...uk2, noMobile: true }));
-    const { container } = renderAt('/experience/1');
+    renderAt('/experience/1');
 
     expect(
-      await screen.findByText(
-        'This feature is not available for mobile devices.',
-      ),
-    ).toHaveClass('screen-demo', 'no-mobile');
-    expect(container.querySelectorAll('.screen-demo')).toHaveLength(1);
+      await screen.findByRole('img', {
+        name: 'Dropdown Cart on a desktop browser',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /on a phone/ })).toBeNull();
+    expect(screen.queryByText(/not available for mobile/)).toBeNull();
+  });
+
+  it('shows "Try it" only when there is demo text', async () => {
+    stubFetch(() => jsonResponse(200, { ...uk2, demoText: null }));
+    renderAt('/experience/1');
+
+    expect(
+      await screen.findByRole('heading', { name: 'What I did' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Try it' })).toBeNull();
+  });
+
+  it('handles a project with nothing optional: no demo, no site, no phone', async () => {
+    stubFetch(() =>
+      jsonResponse(200, {
+        ...benegov,
+        demoText: null,
+        url: null,
+        noMobile: true,
+      }),
+    );
+    renderAt('/experience/5');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Benegov – Site' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
+    ).toEqual(['The problem', 'What I did']);
+    expect(screen.getByText('(site no longer running)')).toBeInTheDocument();
+    expect(screen.getAllByRole('img')).toHaveLength(1);
+    expectHeadingsInOrder();
   });
 
   it('links back to My Work on the home page', async () => {
     stubFetch(() => jsonResponse(200, uk2));
     renderAt('/experience/1');
 
-    expect(await screen.findByRole('link', { name: /Back/ })).toHaveAttribute(
-      'href',
-      '/#my-work',
-    );
+    expect(
+      await screen.findByRole('link', { name: 'Back to My Work' }),
+    ).toHaveAttribute('href', '/#my-work');
   });
 
-  it('shows only an empty showcase until the experience loads', async () => {
-    // Anything shown earlier would move when the content arrives: the footer
-    // gets pushed down, and the Back link sits at a percentage of the page's
-    // height. Lighthouse scored that as the worst possible layout shift on
-    // mobile. The empty title keeps the top margin the real one gives the
-    // page on phones, so the showcase doesn't drop when it arrives.
+  it('shows only an empty header band until the project loads', async () => {
+    // Anything shown earlier would move when the content arrives. The band
+    // keeps its final height, and main is a screen tall, so the footer
+    // stays below the fold (CLS).
     let respond: (response: Response) => void = () => {};
     stubFetch(() => new Promise<Response>((resolve) => (respond = resolve)));
-    const { container } = renderAt('/experience/1');
+    renderAt('/experience/1');
 
-    const showcase = container.querySelector('.showcase')!;
-    expect(showcase.children).toHaveLength(1);
-    expect(showcase.firstElementChild).toHaveClass('main-title');
-    expect(showcase.firstElementChild).toHaveAttribute('aria-hidden', 'true');
-    expect(showcase).toHaveTextContent('');
+    const main = screen.getByRole('main');
+    expect(main).toHaveTextContent('');
+    expect(within(main).queryAllByRole('heading')).toHaveLength(0);
+    expect(within(main).queryAllByRole('link')).toHaveLength(0);
 
     respond(jsonResponse(200, uk2));
     expect(
-      await screen.findByRole('link', { name: /Back/ }),
+      await screen.findByRole('link', { name: 'Back to My Work' }),
     ).toBeInTheDocument();
   });
 
@@ -147,11 +207,19 @@ describe('experience page', () => {
     expect(await screen.findByText('404 | Not Found')).toBeInTheDocument();
   });
 
-  it('says so when the experience could not be loaded', async () => {
+  it('says so when the experience could not be loaded, with the Back link', async () => {
     stubFetch(() => jsonResponse(503, {}));
     renderAt('/experience/1');
 
-    expect(await screen.findByText(/couldn't be loaded/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Sorry, this project couldn't be loaded. Please refresh the page to try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Back to My Work' }),
+    ).toBeInTheDocument();
+    expectHeadingsInOrder();
   });
 });
 
