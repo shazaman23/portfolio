@@ -2,31 +2,19 @@ import { useEffect, useState } from 'react';
 import { getExperiences, type Experience } from '../api';
 import { AboutMe } from '../components/AboutMe';
 import { ContactMe } from '../components/ContactMe';
+import { Hero } from '../components/Hero';
 import { MyWork } from '../components/MyWork';
 
 export function HomePage() {
   const { experiences, loadFailed } = useExperiences();
 
   return (
-    <div className="content container-fluid homepage">
-      <div className="row home">
-        <div className="home-banner">
-          <div className="title">
-            <h1 className="display-3 text-left">
-              <strong>
-                Jake <br />
-                Killpack
-              </strong>
-            </h1>
-            <h5 className="text-muted text-left">Software Engineer</h5>
-          </div>
-        </div>
-      </div>
-
-      <AboutMe />
+    <>
+      <Hero />
       <MyWork experiences={experiences} loadFailed={loadFailed} />
+      <AboutMe />
       <ContactMe />
-    </div>
+    </>
   );
 }
 

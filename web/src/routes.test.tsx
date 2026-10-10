@@ -38,8 +38,9 @@ describe('home page', () => {
     const fetch = stubFetch(() => jsonResponse(200, [uk2, benegov]));
     renderAt('/');
 
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(
-      screen.getByRole('heading', { name: /Jake\s*Killpack/ }),
+      screen.getByRole('heading', { level: 1, name: 'Jake Killpack' }),
     ).toBeInTheDocument();
     for (const name of ['About Me', 'My Work', 'Contact Me']) {
       expect(screen.getByRole('heading', { name })).toBeInTheDocument();
