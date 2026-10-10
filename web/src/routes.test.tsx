@@ -364,3 +364,19 @@ describe('going home from a project page', () => {
     ).toHaveLength(1);
   });
 });
+
+describe('the skip link', () => {
+  it('moves focus to the main content without a history entry', async () => {
+    // A real #content navigation adds a history entry that React Router
+    // reads as Back, restoring an old scroll position (Safari, Firefox).
+    stubFetch(() => jsonResponse(200, [uk2]));
+    const user = userEvent.setup();
+    renderAt('/');
+    const before = window.location.href;
+
+    await user.click(screen.getByRole('link', { name: 'Skip to content' }));
+
+    expect(screen.getByRole('main')).toHaveFocus();
+    expect(window.location.href).toBe(before);
+  });
+});
