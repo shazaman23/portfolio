@@ -52,6 +52,7 @@ describe('home page', () => {
       screen.getByRole('link', { name: /Benegov\s+Site/ }),
     ).toHaveAttribute('href', '/experience/5');
     expect(fetch).toHaveBeenCalledWith('/api/experiences', expect.anything());
+    expectHeadingsInOrder();
   });
 
   it('says so when the experiences could not be loaded', async () => {
