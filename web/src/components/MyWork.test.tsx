@@ -81,6 +81,24 @@ describe('MyWork', () => {
     expect(placeholders).toHaveLength(3);
   });
 
+  it('replaces the placeholders instead of reusing them as cards', () => {
+    // A placeholder's <li> reused for a card moves on screen when the
+    // projects arrive, which Lighthouse counts as a layout shift.
+    const { container, rerender } = renderMyWork(null);
+    const placeholders = Array.from(container.querySelectorAll('li'));
+
+    rerender(
+      <MemoryRouter>
+        <MyWork experiences={experiences} loadFailed={false} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+    for (const placeholder of placeholders) {
+      expect(placeholder).not.toBeInTheDocument();
+    }
+  });
+
   it('shows no cards and no placeholders for an empty list', () => {
     const { container } = renderMyWork([]);
 

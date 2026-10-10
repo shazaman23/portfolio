@@ -34,7 +34,9 @@ export function MyWork({ experiences, loadFailed }: Props) {
           <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {experiences === null
               ? Array.from({ length: PLACEHOLDERS }, (_, i) => (
-                  <li key={i} aria-hidden="true">
+                  // Keys apart from the projects' ids ("1", "2", ...), so
+                  // React never reuses a placeholder as a card.
+                  <li key={`placeholder-${i}`} aria-hidden="true">
                     <div className="h-full overflow-hidden rounded-xl bg-white/10">
                       <div className="aspect-[3/2] bg-white/10" />
                       <div className="h-24" />
